@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>ROST Hamburguesas | Pedí online</title>
+<!-- ═══════════════════════════════════════════════════════════
+     ÍCONO DE LA PÁGINA (FAVICON): la hamburguesa de neón que aparece
+     en la pestaña del navegador, en los favoritos y en Google.
+     Los archivos están en la carpeta  iconos/.
+     ⚠ NO TOCAR el orden ni los nombres. Para cambiar el ícono, reemplazá
+       los archivos de iconos/ por otros con el MISMO nombre.
+     ═══════════════════════════════════════════════════════════ -->
+<link rel="icon" href="iconos/favicon.ico" sizes="48x48">
+<link rel="icon" href="iconos/favicon.svg" type="image/svg+xml">
+<link rel="icon" type="image/png" sizes="96x96" href="iconos/favicon-96.png">
+<link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
+<link rel="manifest" href="iconos/site.webmanifest">
+
+<!-- Texto que Google muestra debajo del nombre en los resultados -->
+<meta name="description" content="ROST Hamburguesas: hamburguesas smash con pan de papa, cheddar y bacon. Mirá la carta y pedí online por WhatsApp.">
+<meta property="og:title" content="ROST Hamburguesas | Pedí online">
+<meta property="og:description" content="Mirá la carta y pedí online por WhatsApp.">
+<meta property="og:image" content="iconos/icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!--
+ ╔══════════════════════════════════════════════════════════════════╗
+ ║                 ROST HAMBURGUESAS · GUÍA RÁPIDA                    ║
+ ╚══════════════════════════════════════════════════════════════════╝
+
+ ESTRUCTURA DE LA CARPETA (todo junto, tal cual):
+   index.html                          ← ESTA página (todo el código)
+   logo-rost-removebg-preview.png      ← logo con fondo transparente
+   fotos/                              ← fotos de las hamburguesas + copia del logo
+
+ ESTA PÁGINA NO USA BASE DE DATOS NI PANEL. Es una página "estática":
+ los precios y productos se cambian editando este archivo. Los pedidos
+ salen por WhatsApp.
+
+ ── QUÉ SE EDITA Y DÓNDE (buscá el cartel "✎ EDITÁ ACÁ" con Ctrl+F) ──
+   1) WHATSAPP ........ línea  let WA_NUMBER = "..."   (en el <script>)
+   2) CAMBIAR PRECIO .. en  PRODUCTOS_BASE  cambiá el número de  precio:
+   3) OFERTA .......... precio:10000 (el nuevo) + antes:12000 (el viejo)
+                        → muestra el viejo tachado y el % de descuento
+   4) AGOTADO ......... disponible:false  (vuelve a  true  cuando hay)
+   5) NUEVA HAMBURGUESA  copiá una línea de PRODUCTOS_BASE, cambiá el id
+                        (número que no se repita) y subí la foto a fotos/
+   6) SACAR PRODUCTO .. borrá su línea (o ponele // adelante)
+   7) CATEGORÍA NUEVA . sumala en  CATEGORIAS  y usá su id en  cat:
+   8) COLORES ......... variables al comienzo del <style> (:root)
+
+ ── CÓMO SE PUBLICA UN CAMBIO ──
+   Guardás el archivo y lo volvés a subir (GitHub Pages, Netlify, etc.).
+   En 1–2 minutos lo ve todo el mundo.
+
+ ── MAPA DEL ARCHIVO (para no perderte) ──
+   <style> ........ todo el diseño: logo neón, tarjetas, botón que muerde
+   <body> ......... estructura: logo, menú, productos, barra del pedido
+   <script> ....... 1 WhatsApp · 2 Categorías · 3 Productos · Sonidos ·
+                    Partículas · Dibujo del menú · Carrito · Envío · Menú
+ ⚠ Lo que dice "NO TOCAR" funciona con otras partes: si lo cambiás
+   podés romper la página.
+-->
+
+<style>
+/* ───────── COLORES Y MEDIDAS (cambiá acá el look general) ───────── */
+:root {
+  --bg: #050505;          /* fondo profundo */
+  --card: #111111;        /* fondo de tarjetas */
+  --card-hover: #161616;  /* fondo de tarjetas al tocar/pasar */
+  --line: #242424;        /* bordes sutiles */
+  --tx: #ffffff;          /* texto principal */
+  --mut: #a0a0a0;         /* texto secundario */
+  --or: #ffa726;          /* naranja ROST (botones, precios, neón) */
+  --or-glow: #ff6d00;     /* halo de neón naranja intenso */
+  --or-core: #fff3e0;     /* núcleo blanco-cálido del tubo de neón */
+  --or-soft: rgba(255, 167, 38, 0.15);
+  --gr: #4cd37b;          /* verde de descuentos */
+  --wa: #25d366;          /* verde WhatsApp */
+  --wa-dark: #1da851;
+  --danger: #ff5252;
+  --r: 24px;              /* redondeo de tarjetas */
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scroll corregido: sin bloqueos ni saltos entre menú y ventana */
+html {
+  scroll-padding-top: 84px;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--tx);
+  font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top, 0px);
+  overflow-x: hidden;
+  position: relative;
+}
+
+body.locked {
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+  user-select: none;
+}
+
+.wrap {
+  max-width: 580px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ───────── BOTÓN DE SONIDO FLOTANTE ARRIBA ───────── */
+.sound-toggle {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 14px;
+  z-index: 30;
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid #2e2e2e;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #ddd;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s;
+}
+.sound-toggle:active {
+  transform: scale(0.9);
+}
+.sound-toggle.on {
+  border-color: rgba(255, 167, 38, 0.5);
+  color: var(--or);
+}
+
+/* ───────── PORTADA & LOGO GIGANTE ROST CON NEÓN REAL ───────── */
+.hero {
+  position: relative;
+  text-align: center;
+  padding: 46px 0 28px;
+  overflow: hidden;
+}
+
+/* Doble resplandor ambiental detrás del logo gigante */
+.hero::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -35px;
+  width: min(620px, 130vw);
+  height: 360px;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(255, 152, 0, 0.2), rgba(255, 87, 34, 0.07) 58%, transparent 100%);
+  pointer-events: none;
+  animation: ambientPulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes ambientPulse {
+  0% { opacity: 0.78; transform: translateX(-50%) scale(0.96); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1.07); }
+}
+
+/* Botón contenedor del Logo ROST mucho más grande e imponente */
+.rost-logo-btn {
+  position: relative;
+  display: block;
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  margin: 0 auto;
+  width: min(480px, 92%);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.rost-logo-btn:hover {
+  transform: scale(1.02);
+}
+.rost-logo-btn:active {
+  transform: scale(0.96);
+}
+
+.rost-logo-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 890 / 280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Imagen base del logo ROST (letras R, S, T). Es el PNG TRANSPARENTE: por eso no queda
+   ningún borde ni recuadro negro alrededor. Si lo cambiás, usá un PNG con fondo transparente. */
+.rost-real-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 4px 18px rgba(255, 255, 255, 0.14));
+  pointer-events: none;
+}
+
+/*
+  CAPAS DE NEÓN: usan logo-rost-burger.png = la hamburguesa SOLA (mismo tamaño que el logo,
+  transparente en todo lo demás). Así el brillo se difumina libre, sin cortes cuadrados.
+  ⚠ NO usar clip-path acá: corta el resplandor y aparece un recuadro naranja.
+*/
+.rost-burger-neon-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+/* Halo exterior difuso e intenso sobre la hamburguesa original */
+/* ✎ INTENSIDAD DEL NEÓN (ya bajada a la mitad) ─ halo exterior: cada drop-shadow es una "capa" de resplandor.
+   Para MÁS brillo subí los números de brightness / blur; para menos, bajalos. */
+/* ✎ INTENSIDAD DEL NEÓN (ya bajada a la mitad) ─ halo exterior: cada drop-shadow es una "capa" de resplandor.
+   Para MÁS brillo subí los números (px y brightness); para menos, bajalos.
+   Usa logo-rost-neon-grueso.png = la hamburguesa con el tubo más GRUESO (misma forma y posición). */
+.rost-burger-neon-img.glow-outer {
+  filter: brightness(1.1) saturate(1.6)
+          drop-shadow(0 0 2px rgba(255, 217, 160, 0.5))
+          drop-shadow(0 0 5px rgba(255, 167, 38, 0.5))
+          drop-shadow(0 0 11px rgba(255, 122, 0, 0.5))
+          drop-shadow(0 0 21px rgba(255, 85, 0, 0.35));
+  animation: neonFlicker 7s infinite;
+  will-change: opacity;
+}
+
+/* Tubo incandescente central sobre la misma hamburguesa del logo */
+/* Núcleo del tubo: casi blanco, es lo que "enciende" el filamento */
+/* Núcleo del tubo: casi blanco (logo-rost-neon-nucleo.png), es lo que "enciende" el neón */
+.rost-burger-neon-img.glow-core {
+  filter: brightness(1.05)
+          drop-shadow(0 0 2px rgba(255, 255, 255, 0.5))
+          drop-shadow(0 0 4px rgba(255, 226, 168, 0.5));
+  animation: neonFlicker 7s infinite;
+  will-change: opacity;
+}
+
+/* Filamento SVG calcado milimétricamente sobre las 3 piezas de logo-rost.png (900x285) */
+/* RESPLANDOR GRANDE detrás de la hamburguesa (ilumina las letras vecinas como un cartel real).
+   Se apaga y prende junto con el neón. */
+.rost-logo-stage::before {
+  content: "";
+  position: absolute;
+  left: 39.4%;
+  top: 50%;
+  width: 70%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, rgba(255, 150, 20, 0.28), rgba(255, 90, 20, 0.13) 42%, rgba(255, 60, 0, 0.04) 68%, transparent 100%);
+  pointer-events: none;
+  animation: neonFlicker 7s infinite;
+  will-change: opacity;
+}
+
+/* Efecto extra al hacer clic en el logo */
+/* Al tocar el logo: el neón se enciende a TODA potencia un momento */
+/* Al tocar el logo: el neón se enciende más fuerte un momento */
+.rost-logo-btn.super-glow .rost-burger-neon-img.glow-outer {
+  filter: brightness(1.3) saturate(2)
+          drop-shadow(0 0 4px rgba(255, 241, 196, 0.7))
+          drop-shadow(0 0 11px rgba(255, 179, 71, 0.6))
+          drop-shadow(0 0 24px rgba(255, 109, 0, 0.5))
+          drop-shadow(0 0 40px rgba(255, 61, 0, 0.4));
+}
+
+/* ═══ PARPADEO DE NEÓN QUE FALLA ═══
+   Dura 7 segundos y se repite. La mayor parte del tiempo está prendido a full, con
+   tres "fallas": tartamudeo corto, un apagón de casi un segundo con reintentos, y un
+   último titileo. opacity 1 = prendido · 0.05 = apagado.
+   ✎ Para más apagones agregá pasos; para que falle menos, bajá la cantidad. */
+@keyframes neonFlicker {
+  0%, 9%      { opacity: 1; }
+  9.5%        { opacity: 0.2; }
+  10%         { opacity: 1; }
+  10.8%       { opacity: 0.08; }
+  11.6%       { opacity: 1; }
+  38%         { opacity: 1; }
+  38.4%       { opacity: 0.45; }
+  39%         { opacity: 1; }
+  60%         { opacity: 1; }
+  60.4%       { opacity: 0.05; }   /* se apaga */
+  63.5%       { opacity: 0.05; }   /* ...queda apagado un rato */
+  63.9%       { opacity: 0.95; }   /* intenta prender */
+  64.5%       { opacity: 0.06; }
+  65.2%       { opacity: 1; }      /* vuelve a prender */
+  66%         { opacity: 0.35; }
+  66.6%, 86%  { opacity: 1; }
+  86.4%       { opacity: 0.3; }
+  87%, 100%   { opacity: 1; }
+}
+
+/* Para ahorrar batería y evitar trabas: cuando el logo sale de pantalla se pausa el neón (lo maneja el script al final) */
+.hero.offscreen .rost-burger-neon-img,
+.hero.offscreen .rost-logo-stage::before,
+.hero.offscreen::before { animation-play-state: paused; }
+
+.hero p {
+  position: relative;
+  margin: 14px 0 16px;
+  color: #dbdbdb;
+  font-size: 16.5px;
+  font-weight: 600;
+}
+
+.chips {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #292929;
+  background: rgba(16, 16, 16, 0.9);
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 12.5px;
+  white-space: nowrap;
+  font-weight: 700;
+  color: #ededed;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s;
+  cursor: pointer;
+}
+.chip:active {
+  transform: scale(0.92);
+  border-color: var(--or);
+}
+.chip b {
+  color: var(--or);
+}
+
+/* ───────── MENÚ DE CATEGORÍAS (pegajoso arriba y scroll suave) ───────── */
+nav {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 15;
+  background: #050505;
+  border-bottom: 1px solid var(--line);
+}
+nav .wrap {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 16px;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+nav .wrap::-webkit-scrollbar {
+  display: none;
+}
+nav a {
+  flex: none;
+  color: #dcdcdc;
+  text-decoration: none;
+  border: 1.5px solid #2e2e2e;
+  background: #0e0e0e;
+  border-radius: 999px;
+  padding: 9px 20px;
+  font-weight: 800;
+  font-size: 15px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+nav a:active {
+  transform: scale(0.92);
+}
+nav a.on {
+  background: var(--or);
+  border-color: var(--or);
+  color: #000;
+  box-shadow: 0 0 18px rgba(255, 167, 38, 0.45);
+}
+
+/* ───────── SECCIONES ───────── */
+section {
+  padding-top: 32px;
+  scroll-margin-top: 76px;
+}
+.sh {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+h2 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+h2::after {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--or);
+  box-shadow: 0 0 10px rgba(255, 167, 38, 0.6);
+  margin-top: 9px;
+}
+.sub {
+  margin: 0;
+  color: var(--mut);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ───────── TARJETA DE HAMBURGUESA (CON OFERTAS Y STOCK EN TIEMPO REAL) ───────── */
+.burger {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 22px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s, box-shadow 0.25s, filter 0.25s;
+}
+.burger.in {
+  opacity: 1;
+  transform: none;
+}
+.burger.has {
+  border-color: rgba(255, 167, 38, 0.55);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.65), 0 0 22px rgba(255, 167, 38, 0.12);
+}
+.burger.sold-out {
+  border-color: #262626;
+}
+.burger.sold-out .ph img {
+  filter: grayscale(0.75) brightness(0.55);
+}
+
+/* Rebote jugoso de la tarjeta al agregar */
+.burger.juicy-pop {
+  animation: cardJuicyPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes cardJuicyPop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.022, 0.98); }
+  70% { transform: scale(0.995, 1.01); }
+  100% { transform: scale(1); }
+}
+
+.ph {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #080808;
+  overflow: hidden;
+}
+.ph img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), filter 0.3s;
+}
+.burger:not(.sold-out):hover .ph img {
+  transform: scale(1.045);
+}
+.burger.juicy-pop .ph img {
+  transform: scale(1.08);
+}
+.ph::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 58%;
+  background: linear-gradient(transparent, rgba(17, 17, 17, 0.65) 55%, var(--card));
+  pointer-events: none;
+}
+
+.tag {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 14px;
+  background: var(--or);
+  color: #000;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 6px 13px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 167, 38, 0.55);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.tag::before {
+  content: "🔥";
+  font-size: 12px;
+}
+
+.promo-pill {
+  position: absolute;
+  z-index: 2;
+  bottom: 34px;
+  left: 18px;
+  background: var(--gr);
+  color: #000;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  border-radius: 8px;
+  padding: 4px 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 14px rgba(76, 211, 123, 0.45);
+}
+
+.soldout-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+}
+.soldout-badge {
+  background: rgba(20, 20, 20, 0.92);
+  border: 2px solid var(--danger);
+  color: #ff8a80;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+}
+
+/* Contador flotante en la esquina de la foto cuando está en el pedido */
+.qty-badge {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  right: 14px;
+  background: rgba(0, 0, 0, 0.82);
+  border: 1.5px solid var(--or);
+  color: var(--or);
+  font-weight: 900;
+  font-size: 13px;
+  border-radius: 999px;
+  padding: 5px 11px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.25s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+.burger.has .qty-badge {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.bd {
+  position: relative;
+  padding: 0 18px 18px;
+  margin-top: -26px;
+  z-index: 2;
+}
+.burger h3 {
+  margin: 0 0 8px;
+  font-size: clamp(26px, 7.5vw, 33px);
+  line-height: 1.02;
+  font-weight: 900;
+  letter-spacing: -0.8px;
+}
+.burger p {
+  margin: 0 0 16px;
+  color: #cccccc;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.price-box {
+  display: flex;
+  flex-direction: column;
+}
+.old-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #777;
+  text-decoration: line-through;
+  margin-bottom: -3px;
+}
+.price {
+  font-size: 31px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: var(--or);
+  text-shadow: 0 0 18px rgba(255, 167, 38, 0.22);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.burger.juicy-pop .price {
+  transform: scale(1.08);
+}
+
+/* Botón Agregar + Selector de cantidad con micro-animación */
+.add {
+  position: relative;
+  overflow: hidden;
+  background: var(--or);
+  color: #000;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 22px;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 16px rgba(255, 167, 38, 0.3);
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s, background-color 0.2s;
+}
+.add:hover:not(:disabled) {
+  background: #ffb340;
+  box-shadow: 0 6px 20px rgba(255, 167, 38, 0.45);
+}
+.add:active:not(:disabled) {
+  transform: scale(0.9);
+}
+.add:disabled {
+  background: #232323;
+  color: #6e6e6e;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.step {
+  display: none;
+  align-items: center;
+  background: var(--or-soft);
+  border: 1.5px solid var(--or);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 16px rgba(255, 167, 38, 0.2);
+  animation: stepPopIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes stepPopIn {
+  from { transform: scale(0.82); opacity: 0.5; }
+  to { transform: scale(1); opacity: 1; }
+}
+.step button {
+  background: none;
+  border: 0;
+  width: 46px;
+  height: 46px;
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--or);
+  transition: transform 0.14s, background-color 0.15s;
+}
+.step button:active {
+  transform: scale(0.82);
+  background: rgba(255, 167, 38, 0.25);
+}
+.step b {
+  min-width: 30px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+  display: inline-block;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.step b.num-pop {
+  animation: numBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes numBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.42); color: var(--or); }
+  100% { transform: scale(1); }
+}
+
+.has .add {
+  display: none;
+}
+.has .step {
+  display: flex;
+}
+
+/* ───────── BEBIDAS ───────── */
+.drinks {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 4px 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+}
+.drink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 4px;
+  border-bottom: 1px solid var(--line);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, opacity 0.2s;
+  border-radius: 12px;
+}
+.drink:last-child {
+  border: 0;
+}
+.drink.sold-out {
+  opacity: 0.5;
+}
+.drink.juicy-pop {
+  animation: cardJuicyPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.drink b {
+  display: block;
+  font-size: 17px;
+  font-weight: 800;
+}
+.drink small {
+  color: var(--mut);
+  font-size: 15px;
+  font-weight: 700;
+}
+.drink s {
+  color: #6e6e6e;
+  margin-right: 6px;
+}
+.drink .off {
+  color: #000;
+  background: var(--gr);
+  font-weight: 900;
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 2px 7px;
+  margin-left: 6px;
+  vertical-align: 1px;
+  display: inline-block;
+  box-shadow: 0 0 10px rgba(76, 211, 123, 0.35);
+}
+.drink .add {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 24px;
+  line-height: 1;
+  border-radius: 12px;
+}
+.drink .add:disabled {
+  font-size: 11px;
+  width: auto;
+  padding: 0 10px;
+}
+.drink .step button {
+  width: 40px;
+  height: 44px;
+}
+.drink .step {
+  border-radius: 12px;
+}
+
+footer {
+  color: var(--mut);
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 44px 16px 145px;
+}
+.footer-logo {
+  width: 150px;
+  margin: 0 auto 12px;
+  opacity: 0.9;
+  display: block;
+}
+/* ───────── BARRA DEL PEDIDO (abajo) ───────── */
+.cartbar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  max-width: 548px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #ffb338 0%, #ff9800 100%);
+  color: #000;
+  border: 0;
+  border-radius: 20px;
+  padding: 16px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 900;
+  font-size: 17px;
+  z-index: 20;
+  box-shadow: 0 12px 36px rgba(255, 167, 38, 0.42), 0 6px 24px rgba(0, 0, 0, 0.75);
+  transform: translateY(170%);
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cartbar.on {
+  transform: none;
+}
+.cartbar:active {
+  transform: scale(0.97);
+}
+.cartbar.bump {
+  animation: barSquashBump 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes barSquashBump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.045, 0.95) translateY(-3px); }
+  75% { transform: scale(0.985, 1.02); }
+  100% { transform: scale(1); }
+}
+
+.cartbar-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.cartbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.14);
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+/* ───────── PANEL DEL PEDIDO (MODAL INFERIOR CON RETIRO / ENVÍO) ───────── */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+.sheet.on {
+  opacity: 1;
+  pointer-events: auto;
+}
+.panel {
+  position: relative;
+  background: #141414;
+  border-top: 1px solid #2b2b2b;
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+  border-radius: 28px 28px 0 0;
+  padding: 12px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  max-height: 90vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translateY(100%);
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 -12px 48px rgba(0,0,0,0.85);
+}
+.sheet.on .panel {
+  transform: none;
+}
+.grab {
+  width: 44px;
+  height: 5px;
+  border-radius: 5px;
+  background: #3a3a3a;
+  margin: 0 auto 14px;
+}
+.panel h4 {
+  font-size: 26px;
+  margin: 0 0 8px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+.x {
+  position: absolute;
+  right: 16px;
+  top: 18px;
+  background: #262626;
+  border: 0;
+  color: #fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+  transition: transform 0.15s, background-color 0.15s;
+}
+.x:active {
+  transform: scale(0.85);
+  background: #383838;
+}
+.it {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.it span {
+  flex: 1;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.it em {
+  display: block;
+  font-style: normal;
+  color: var(--mut);
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+.qb {
+  background: #262626;
+  border: 1px solid #363636;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--or);
+  transition: transform 0.14s, background-color 0.15s;
+}
+.qb:active {
+  transform: scale(0.84);
+  background: #333;
+}
+.q {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 900;
+}
+
+/* Selector Retirar vs Envío a Domicilio */
+.delivery-box {
+  margin-top: 14px;
+  background: #0c0c0c;
+  border: 1px solid #262626;
+  border-radius: 18px;
+  padding: 12px;
+}
+.delivery-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #b5b5b5;
+  margin-bottom: 8px;
+}
+.delivery-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.d-tab {
+  background: #161616;
+  border: 1.5px solid #2c2c2c;
+  border-radius: 14px;
+  padding: 11px 10px;
+  font-weight: 800;
+  font-size: 14.5px;
+  color: #d5d5d5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.d-tab:active {
+  transform: scale(0.95);
+}
+.d-tab.active {
+  background: var(--or-soft);
+  border-color: var(--or);
+  color: var(--or);
+  box-shadow: 0 0 16px rgba(255, 167, 38, 0.2);
+}
+
+.field-input {
+  width: 100%;
+  background: #121212;
+  color: #fff;
+  border: 1.5px solid #2c2c2c;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 15px;
+  margin-top: 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field-input:focus {
+  outline: none;
+  border-color: var(--or);
+  box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.2);
+}
+.field-input.error-shake {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.28);
+  animation: inputShake 0.4s ease;
+}
+@keyframes inputShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-7px); }
+  40%, 80% { transform: translateX(7px); }
+}
+
+.address-wrap {
+  display: none;
+  animation: fadeSlideDown 0.25s ease forwards;
+}
+.address-wrap.show {
+  display: block;
+}
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+textarea {
+  width: 100%;
+  background: #0c0c0c;
+  color: #fff;
+  border: 1.5px solid #262626;
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin: 10px 0 14px;
+  font: inherit;
+  font-size: 15px;
+  min-height: 66px;
+  resize: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+textarea:focus {
+  outline: none;
+  border-color: var(--or);
+  box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.2);
+}
+.tot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 27px;
+  font-weight: 900;
+  margin-bottom: 16px;
+}
+.tot span:last-child {
+  color: var(--or);
+}
+
+/* ───────── BOTÓN DE WHATSAPP CON MORDIDAS DE DIENTES REALES ───────── */
+.send-wrap {
+  position: relative;
+  width: 100%;
+  min-height: 62px;
+}
+
+.send {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(135deg, #2be071 0%, #20bd5a 100%);
+  color: #041b0b;
+  border: 0;
+  border-radius: 18px;
+  padding: 18px 20px;
+  font-weight: 900;
+  font-size: 17.5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 26px rgba(37, 211, 102, 0.35);
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s, opacity 0.2s;
+  overflow: hidden;
+}
+.send:hover {
+  filter: brightness(1.06);
+}
+.send:active {
+  transform: scale(0.97);
+}
+.send svg.wa-ic {
+  width: 23px;
+  height: 23px;
+  flex-shrink: 0;
+}
+
+/* MORDIDAS DE DIENTES (Arcos dentales festoneados con marca de incisivos y colmillos) */
+.teeth-bite {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transform: scale(0.35);
+  transition: opacity 0.08s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.teeth-bite svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* Bocado 1: Mordida dental grande desde la derecha */
+.tb-right {
+  width: 175px;
+  height: 135px;
+  right: -34px;
+  top: -32px;
+}
+
+/* Bocado 2: Mordida dental grande desde la izquierda y centro-abajo */
+.tb-left {
+  width: 185px;
+  height: 140px;
+  left: -30px;
+  bottom: -36px;
+}
+.tb-top-mid {
+  width: 165px;
+  height: 120px;
+  left: 26%;
+  top: -46px;
+}
+
+/* Bocado 1 activo */
+.send.bite-1 {
+  animation: chompShake1 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+.send.bite-1 .tb-right,
+.send.bite-2 .tb-right {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Bocado 2 activo: quedan marcados todos los dientes alrededor del último pedacito */
+.send.bite-2 {
+  animation: chompShake2 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+.send.bite-2 .tb-left,
+.send.bite-2 .tb-top-mid {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Bocado 3 activo: ¡Mandíbula cierra y devora el último bocado! */
+.send.bite-3 {
+  animation: chompDevour3 0.36s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes chompShake1 {
+  0% { transform: scale(1); }
+  22% { transform: scale(0.91, 1.09) rotate(-2.8deg) translateX(-8px); }
+  55% { transform: scale(1.04, 0.95) rotate(1.6deg) translateX(4px); }
+  100% { transform: scale(0.98) rotate(-0.8deg); }
+}
+
+@keyframes chompShake2 {
+  0% { transform: scale(0.98) rotate(-0.8deg); }
+  22% { transform: scale(0.85, 1.13) rotate(3.4deg) translateX(9px); }
+  60% { transform: scale(1.03, 0.94) rotate(-2deg); }
+  100% { transform: scale(0.93) rotate(1.4deg); }
+}
+
+@keyframes chompDevour3 {
+  0% { transform: scale(0.93) rotate(1.4deg); opacity: 1; }
+  35% { transform: scale(1.14, 0.75) rotate(-5deg); opacity: 0.92; }
+  100% { transform: scale(0) rotate(14deg); opacity: 0; }
+}
+
+/* Mensaje que aparece cuando el botón fue comido en los 3 bocados */
+.eaten-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 900;
+  font-size: 17px;
+  color: var(--or);
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.eaten-msg.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ───────── PARTÍCULAS Y EFECTOS DE CLIC (MIGAS, EMOJIS, TEXTO COMIC) ───────── */
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.fx-particle {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+  font-size: 18px;
+  line-height: 1;
+  user-select: none;
+}
+
+.fx-crumb {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 45% 55% 60% 40%;
+  will-change: transform, opacity;
+}
+
+.fx-comic {
+  position: absolute;
+  pointer-events: none;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  color: #fff;
+  background: #ff6d00;
+  border: 2.5px solid #fff;
+  padding: 4px 12px;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.65);
+  transform: translate(-50%, -50%) scale(0);
+  animation: comicPop 0.72s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  white-space: nowrap;
+}
+
+@keyframes comicPop {
+  0% { transform: translate(-50%, -50%) scale(0.2) rotate(-10deg); opacity: 0; }
+  35% { transform: translate(-50%, -95%) scale(1.15) rotate(4deg); opacity: 1; }
+  75% { transform: translate(-50%, -120%) scale(1) rotate(-2deg); opacity: 1; }
+  100% { transform: translate(-50%, -150%) scale(0.8); opacity: 0; }
+}
+
+.fx-plus-one {
+  position: absolute;
+  pointer-events: none;
+  font-weight: 900;
+  font-size: 17px;
+  color: var(--or);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.85), 0 0 10px rgba(255, 167, 38, 0.8);
+  transform: translate(-50%, -50%);
+  animation: floatUpFade 0.68s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes floatUpFade {
+  0% { transform: translate(-50%, -20%) scale(0.6); opacity: 0; }
+  30% { transform: translate(-50%, -90%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -190%) scale(0.95); opacity: 0; }
+}
+
+button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--or);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .burger { opacity: 1; transform: none; }
+}
+</style>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ⚠ NO TOCAR ─ RESPALDO DE IMÁGENES
+   Si una imagen no se encuentra, estas funciones prueban otras rutas
+   (por ejemplo "fotos/archivo.jpg") para que nunca quede un hueco roto.
+   ═══════════════════════════════════════════════════════════ */
+window.resolveLogoPhoto = function(img) {
+  const step = Number(img.dataset.fallbackStep || 0);
+  const candidates = [
+    "fotos/logo-rost-removebg-preview.png",   // 1° intento: copia dentro de fotos/
+    "fotos/logo-rost.png"                      // último recurso (tiene fondo negro)
+  ];
+  if (step < candidates.length) {
+    img.dataset.fallbackStep = String(step + 1);
+    img.src = candidates[step];
+  } else {
+    img.onerror = null;
+  }
+};
+
+window.resolveRealPhoto = function(img) {
+  const file = img.dataset.file;
+  if (!file) return;
+  const baseName = file.replace(/^fotos\//, "");
+  const step = Number(img.dataset.fallbackStep || 0);
+  const candidates = [
+    "fotos/" + baseName,
+    baseName,
+    baseName.replace(".jpg", "_2.jpg"),
+    "fotos/" + baseName.replace(".jpg", "_2.jpg")
+  ];
+  if (step < candidates.length) {
+    img.dataset.fallbackStep = String(step + 1);
+    img.src = candidates[step];
+  } else {
+    img.onerror = null;
+  }
+};
+</script>
+</head>
+<body>
+
+<!-- Toast para avisos rápidos -->
+<div class="toast-msg" id="toastMsg" role="status" aria-live="polite"></div>
+
+<!-- Botón para activar/silenciar efectos de sonido -->
+<button class="sound-toggle on" id="soundBtn" aria-label="Alternar sonido">
+  <span id="soundIcon">🔊</span>
+  <span id="soundTxt">Sonido ON</span>
+</button>
+
+<!-- Capa global para partículas, migas y efectos al hacer clic -->
+<div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
+
+<header class="hero wrap">
+  <!--
+    LOGO GIGANTE DE ROST CON LA HAMBURGUESA EN NEÓN (3 capas apiladas, todas del mismo tamaño):
+      1. el logo completo (PNG transparente)
+      2. la hamburguesa con tubo GRUESO naranja + halo (logo-rost-neon-grueso.png)   ┐ titilan
+      3. el núcleo blanco-cálido del tubo (logo-rost-neon-nucleo.png)                ┘ juntas
+    ⚠ NO TOCAR las 3 capas: son PNG del mismo tamaño y calzan exacto una sobre otra.
+    Para cambiar el logo hay que reemplazar los 3 PNG de neón + el completo. Pedime y los genero.
+  -->
+  <button class="rost-logo-btn" id="logoNeonBtn" aria-label="ROST Hamburguesas">
+    <div class="rost-logo-stage">
+      <!-- 1. Logo completo original -->
+      <img
+        class="rost-real-logo-img"
+        src="logo-rost-removebg-preview.png"
+        data-logo="1"
+        onerror="resolveLogoPhoto(this)"
+        alt="ROST Hamburguesas"
+        width="890"
+        height="280"
+      >
+      <!-- 2. Misma imagen original recortada en la hamburguesa con halo de neón profundo -->
+      <img
+        class="rost-burger-neon-img glow-outer"
+        src="logo-rost-neon-grueso.png"
+        onerror="this.onerror=null;this.src='fotos/logo-rost-neon-grueso.png'"
+        alt=""
+        aria-hidden="true"
+        width="890"
+        height="280"
+      >
+      <!-- 3. Misma imagen original recortada en la hamburguesa con núcleo incandescente -->
+      <img
+        class="rost-burger-neon-img glow-core"
+        src="logo-rost-neon-nucleo.png"
+        onerror="this.onerror=null;this.src='fotos/logo-rost-neon-nucleo.png'"
+        alt=""
+        aria-hidden="true"
+        width="890"
+        height="280"
+      >
+    </div>
+  </button>
+
+  <p>Pedí online y lo confirmamos por WhatsApp</p>
+  <div class="chips">
+    <span class="chip" data-chip="fries"><b>🍟</b> Todas con papas fritas</span>
+    <span class="chip" data-chip="wa"><b>💬</b> Pedido por WhatsApp</span>
+  </div>
+</header>
+
+<nav aria-label="Categorías del menú"><div class="wrap" id="nav"></div></nav>
+
+<!-- Las secciones y productos se generan solos desde las listas del <script> -->
+<main class="wrap" id="app"></main>
+
+<footer>
+  <img
+    class="footer-logo"
+    src="logo-rost-removebg-preview.png"
+    data-logo="1"
+    onerror="resolveLogoPhoto(this)"
+    alt="ROST Hamburguesas"
+  >
+  <div>ROST Hamburguesas · Todas las hamburguesas incluyen porción de papas fritas</div>
+</footer>
+
+<!-- Barra flotante inferior para ver el pedido -->
+<button class="cartbar" id="bar" aria-label="Ver pedido">
+  <span class="cartbar-left">
+    <span class="cartbar-icon">🍔</span>
+    <span id="bn">0 productos</span>
+  </span>
+  <span id="bt">$0</span>
+</button>
+
+<!-- Panel del pedido con selector Retirar/Envío y botón de WhatsApp con MORDIDAS DE DIENTES -->
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="panel">
+    <div class="grab"></div>
+    <button class="x" id="cl" aria-label="Cerrar">×</button>
+    <h4 id="sheetTitle">Tu pedido en ROST</h4>
+    <div id="items"></div>
+
+    <!-- Selector ¿Retirar o Envío a domicilio? -->
+    <div class="delivery-box">
+      <span class="delivery-label">¿Cómo recibís tu pedido?</span>
+      <div class="delivery-tabs">
+        <button type="button" class="d-tab active" id="tabRetiro" data-mode="retiro">
+          🏪 Retirar en local
+        </button>
+        <button type="button" class="d-tab" id="tabEnvio" data-mode="envio">
+          🛵 Envío a domicilio
+        </button>
+      </div>
+
+      <!-- Campo de dirección que se despliega cuando eligen Envío -->
+      <div class="address-wrap" id="addressWrap">
+        <input
+          type="text"
+          class="field-input"
+          id="addressInput"
+          placeholder="📍 Dirección exacta (Calle, altura, piso o entre calles)"
+          autocomplete="street-address"
+        >
+      </div>
+
+      <!-- Nombre opcional para identificar el pedido -->
+      <input
+        type="text"
+        class="field-input"
+        id="clientNameInput"
+        placeholder="👤 Tu nombre (opcional)"
+        autocomplete="name"
+      >
+    </div>
+
+    <textarea id="note" placeholder="Aclaraciones: sin cebolla, bien cocida, timbre, etc."></textarea>
+    <div class="tot"><span>Total</span><span id="tt">$0</span></div>
+
+    <div class="send-wrap" id="sendWrap">
+      <button class="send" id="send">
+        <!-- MORDIDA DE DIENTES 1 (Derecha: arco de incisivos y colmillos marcados) -->
+        <span class="teeth-bite tb-right" aria-hidden="true">
+          <svg viewBox="0 0 180 140">
+            <!-- Sombra/borde de los dientes clavados en el botón -->
+            <path d="M 180 0 L 58 0 C 44 12, 46 28, 62 34 C 38 42, 36 62, 54 70 C 36 78, 38 98, 62 106 C 46 112, 44 128, 58 140 L 180 140 Z" fill="#141414" stroke="#fff3d1" stroke-width="5" stroke-linejoin="round"/>
+            <!-- Marcas individuales de los dientes superiores -->
+            <path d="M 58 2 C 46 13, 48 27, 62 33 M 59 35 C 39 43, 38 61, 55 69 M 55 71 C 38 79, 39 97, 62 105 M 62 107 C 48 113, 46 127, 58 138" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+
+        <!-- MORDIDA DE DIENTES 2A (Izquierda: arco dental grande) -->
+        <span class="teeth-bite tb-left" aria-hidden="true">
+          <svg viewBox="0 0 190 140">
+            <path d="M 0 0 L 122 0 C 138 12, 136 28, 118 35 C 144 43, 146 63, 126 71 C 146 79, 144 99, 118 107 C 136 114, 138 128, 122 140 L 0 140 Z" fill="#141414" stroke="#fff3d1" stroke-width="5" stroke-linejoin="round"/>
+          </svg>
+        </span>
+
+        <!-- MORDIDA DE DIENTES 2B (Centro-arriba: arco dental superior) -->
+        <span class="teeth-bite tb-top-mid" aria-hidden="true">
+          <svg viewBox="0 0 170 120">
+            <path d="M 0 0 L 170 0 L 158 72 C 144 88, 124 86, 116 68 C 106 92, 86 94, 78 72 C 70 94, 50 92, 40 68 C 32 86, 14 88, 4 72 Z" fill="#141414" stroke="#fff3d1" stroke-width="5" stroke-linejoin="round"/>
+          </svg>
+        </span>
+
+        <svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm4.9 13.6c-.2.6-1.2 1.1-1.7 1.2-.4.1-1 .1-3.1-.8-2.6-1.1-4.3-3.7-4.4-3.9-.1-.2-1-1.4-1-2.6s.7-1.9.9-2.1c.3-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.3 0 .5l-.4.5c-.1.2-.3.3-.1.6.2.3.8 1.2 1.6 2 1.1.9 2 1.2 2.3 1.4.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.8.9c.3.1.4.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
+        <span id="sendTxt">Enviar pedido por WhatsApp</span>
+      </button>
+      <div class="eaten-msg" id="eatenMsg">🍔 ¡ÑAM! Abriendo WhatsApp...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+/* ═══════════════════════════════════════════════════════════
+   ✎ EDITÁ ACÁ ─ 1) NÚMERO DE WHATSAPP DEL LOCAL
+   Es el número que recibe los pedidos.
+   Formato: código de país + código de área + número,
+   SIN "+", SIN espacios y SIN guiones.
+   Ejemplo Argentina (Río Negro, 0298 15-412345): "5492984412345"
+   Si queda vacío ("") el botón de pedir NO va a funcionar.
+   ═══════════════════════════════════════════════════════════ */
+let WA_NUMBER = "";
+
+/* ═══════════════════════════════════════════════════════════
+   ✎ EDITÁ ACÁ ─ 2) CATEGORÍAS (las secciones del menú)
+   Cada línea:  [ "id", "Título que se ve", "Texto chico debajo" ]
+   • El "id" es el que se usa en  cat:  de cada producto (abajo).
+   • El orden de esta lista es el orden en la página y en el menú.
+   • Para sumar una (ej. Postres):  ["postres", "Postres", "Para cerrar bien"],
+   ═══════════════════════════════════════════════════════════ */
+const CATEGORIAS = [
+  ["clasicas", "Clásicas", "Las de siempre, bien cargadas"],
+  ["premium",  "Premium",  "Pan de papa y parmesano"],
+  ["palta",    "Palta",    "Con mayonesa de palta"],
+  ["bebidas",  "Bebidas",  ""]
+];
+
+/* ═══════════════════════════════════════════════════════════
+   ✎ EDITÁ ACÁ ─ 3) PRODUCTOS, PRECIOS, OFERTAS Y STOCK
+   Esta lista ES el menú. Cada línea { ... } es un producto.
+
+   CAMPOS
+     id ........ número ÚNICO (nunca repetir)
+     cat ....... id de una categoría de arriba
+     nombre .... lo que se ve como título
+     desc ...... ingredientes (las bebidas no llevan)
+     precio .... precio de venta HOY, sin puntos ni "$"
+     antes ..... (opcional) precio anterior → activa la OFERTA:
+                 se ve tachado + cartel verde con el % de descuento
+     foto ...... nombre del archivo en fotos/  (las bebidas no llevan)
+     etiqueta .. (opcional) cartelito naranja, ej. "La de la casa"
+     disponible  true = se puede pedir · false = "Agotada" (gris, sin botón)
+
+   RECETAS RÁPIDAS
+     Cambiar precio ......... precio:14000  →  precio:15000
+     Poner oferta ........... precio:12000, antes:14000
+     Sacar la oferta ........ borrá la parte  antes:xxxx,
+     Marcar como agotada .... disponible:false
+     ⚠ Respetá las comas al final de cada línea y las comillas "".
+   ═══════════════════════════════════════════════════════════ */
+const PRODUCTOS_BASE = [
+  /* ── CLÁSICAS ── */
+  { id:1, cat:"clasicas", nombre:"Clásica Simple", precio:11000, foto:"fotos/clasica-simple.jpg", disponible:true,
+    desc:"Medallón de carne, cheddar fundido, bacon crocante, mayonesa y ketchup. Incluye porción de papas fritas." },
+  { id:2, cat:"clasicas", nombre:"Clásica Doble", precio:13000, foto:"fotos/clasica-doble.jpg", disponible:true,
+    desc:"Dos medallones, doble cheddar, bacon crocante, mayonesa y ketchup. Incluye porción de papas fritas." },
+  { id:3, cat:"clasicas", nombre:"Doble Rost BBQ", precio:14000, foto:"fotos/doble-rost-bbq.jpg", etiqueta:"La de la casa", disponible:true,
+    desc:"Dos medallones, cuádruple cheddar, bacon, pepinillos y salsa barbacoa. Incluye porción de papas fritas." },
+  { id:4, cat:"clasicas", nombre:"Clásica Triple BBQ", precio:15000, foto:"fotos/clasica-triple-bbq.jpg", disponible:true,
+    desc:"Tres medallones, triple cheddar, bacon crocante, verdeo y barbacoa. Incluye porción de papas fritas." },
+
+  /* ── PREMIUM ── */
+  { id:5, cat:"premium", nombre:"Premium Ahumada Simple", precio:12000, foto:"fotos/premium-ahumada-simple.jpg", disponible:true,
+    desc:"Medallón de carne, doble cheddar, bacon, pepinillos y mayonesa ahumada. Incluye porción de papas fritas." },
+  { id:6, cat:"premium", nombre:"Premium Malbec Doble", precio:14000, foto:"fotos/premium-malbec-doble.jpg", disponible:true,
+    desc:"Pan de papa con parmesano, dos medallones, cuádruple cheddar, cebolla caramelizada al malbec y mayonesa ahumada. Incluye porción de papas fritas." },
+  { id:7, cat:"premium", nombre:"Premium Rost Cuádruple", precio:18000, foto:"fotos/premium-rost-cuadruple.jpg", etiqueta:"La más cargada", disponible:true,
+    desc:"Pan de papa con parmesano, cuatro medallones, ocho fetas de cheddar, cebolla caramelizada al malbec, bacon, pepinillos y barbacoa. Incluye porción de papas fritas." },
+
+  /* ── PALTA ── */
+  { id:8, cat:"palta", nombre:"Triple Palta", precio:16000, foto:"fotos/triple-palta.jpg", disponible:true,
+    desc:"Pan de papa con parmesano, tres medallones, triple queso danbo, tomate y mayonesa de palta. Incluye porción de papas fritas." },
+
+  /* ── BEBIDAS (sin foto) ── */
+  { id:21, cat:"bebidas", nombre:"Mirinda 500 ml", precio:2500, disponible:true },
+  { id:22, cat:"bebidas", nombre:"Pepsi 500 ml", precio:2500, disponible:true },
+  { id:23, cat:"bebidas", nombre:"7UP 500 ml", precio:2500, disponible:true },
+  { id:24, cat:"bebidas", nombre:"Paso de los Toros Pomelo 500 ml", precio:2500, disponible:true },
+  { id:25, cat:"bebidas", nombre:"Mirinda 500 ml x2", precio:4000, antes:5000, disponible:true },
+  { id:26, cat:"bebidas", nombre:"Pepsi 500 ml x2", precio:4000, antes:5000, disponible:true },
+  { id:27, cat:"bebidas", nombre:"7UP 500 ml x2", precio:4000, antes:5000, disponible:true },
+  { id:28, cat:"bebidas", nombre:"Paso de los Toros Pomelo 500 ml x2", precio:4000, antes:5000, disponible:true }
+];
+
+/* ⚠ NO TOCAR ─ ESTADO DE LA PÁGINA
+   PRODUCTOS : copia de la lista de arriba con la que trabaja la página.
+   deliveryMode : "retiro" o "envio" (lo cambia el cliente en el pedido).
+   cart : el carrito { idProducto: cantidad }. $ y money son atajos. */
+let PRODUCTOS = PRODUCTOS_BASE.map(p => ({ ...p }));
+let deliveryMode = "retiro"; // "retiro" | "envio"
+
+const $ = s => document.querySelector(s);
+const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
+const cart = {}; // { idProducto: cantidad }
+const find = id => PRODUCTOS.find(p => p.id == id);
+
+/* Avisos flotantes (Toast) */
+/* ── CARTELITO DE AVISO ──  showToast('texto') muestra un mensaje breve abajo (ej. "falta la dirección"). */
+let toastTimer = null;
+function showToast(msg) {
+  const t = $("#toastMsg");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2700);
+}
+
+/* ───────── MOTOR DE SONIDO SINTETIZADO (WEB AUDIO API) ───────── */
+/* ═══════════════════════════════════════════════════════════
+   SONIDOS  (se generan con código, no hay archivos de audio)
+   playAddSound ......... "ploc" al agregar al carrito
+   playSoftTick ......... clic suave (menú, botones)
+   playNeonSparkSound ... chispazo al tocar el logo
+   playBurgerBiteSound .. mordida del botón de WhatsApp
+   El botón 🔊 de arriba los activa / silencia (soundEnabled).
+   ═══════════════════════════════════════════════════════════ */
+let soundEnabled = true;
+let audioCtx = null;
+
+function getAudio() {
+  if (!soundEnabled) return null;
+  if (!audioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) audioCtx = new AudioContext();
+  }
+  if (audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+/* Sonido corto y lindo al agregar producto */
+function playAddSound() {
+  const ctx = getAudio();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(320, now);
+  osc.frequency.exponentialRampToValueAtTime(690, now + 0.09);
+  gain.gain.setValueAtTime(0.18, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.12);
+
+  const osc2 = ctx.createOscillator();
+  const gain2 = ctx.createGain();
+  osc2.type = "triangle";
+  osc2.frequency.setValueAtTime(520, now + 0.05);
+  osc2.frequency.exponentialRampToValueAtTime(980, now + 0.14);
+  gain2.gain.setValueAtTime(0.12, now + 0.05);
+  gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  osc2.connect(gain2);
+  gain2.connect(ctx.destination);
+  osc2.start(now + 0.05);
+  osc2.stop(now + 0.16);
+}
+
+/* Sonido suave al quitar un producto o cambiar pestaña */
+function playSoftTick(freq = 260) {
+  const ctx = getAudio();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(freq, now);
+  osc.frequency.exponentialRampToValueAtTime(140, now + 0.07);
+  gain.gain.setValueAtTime(0.11, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.08);
+}
+
+/* Sonido chispeante de cartel de neón al tocar el logo ROST */
+function playNeonSparkSound() {
+  const ctx = getAudio();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(110, now);
+  osc.frequency.linearRampToValueAtTime(145, now + 0.18);
+  gain.gain.setValueAtTime(0.06, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.23);
+
+  const ping = ctx.createOscillator();
+  const pingGain = ctx.createGain();
+  ping.type = "sine";
+  ping.frequency.setValueAtTime(1046, now + 0.03);
+  ping.frequency.exponentialRampToValueAtTime(1568, now + 0.18);
+  pingGain.gain.setValueAtTime(0.09, now + 0.03);
+  pingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+  ping.connect(pingGain);
+  pingGain.connect(ctx.destination);
+  ping.start(now + 0.03);
+  ping.stop(now + 0.24);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ¡SONIDO HIPER-REALISTA DE BOCADO DE HAMBURGUESA CRUJIENTE!
+   Combina 4 capas acústicas:
+   1. Mordida de dientes / cierre de mandíbula ("CHOMP" grave 170Hz -> 38Hz)
+   2. Desgarro crujiente del pan de papa tostado y bacon crocante (ráfagas múltiples de ruido rosa/blanco filtrado)
+   3. Textura jugosa del medallón y salsas (resonancia media modulada)
+   4. Masticación secundaria a los 110ms dentro de cada bocado
+   ═══════════════════════════════════════════════════════════ */
+function playBurgerBiteSound(biteIndex = 1) {
+  const ctx = getAudio();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  // CAPA 1: Cierre de mandíbula ("CHOMP" profundo)
+  const jawOsc = ctx.createOscillator();
+  const jawGain = ctx.createGain();
+  jawOsc.type = "triangle";
+  const startPitch = biteIndex === 1 ? 165 : biteIndex === 2 ? 185 : 205;
+  jawOsc.frequency.setValueAtTime(startPitch, now);
+  jawOsc.frequency.exponentialRampToValueAtTime(36, now + 0.16);
+  jawGain.gain.setValueAtTime(0.55, now);
+  jawGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  jawOsc.connect(jawGain);
+  jawGain.connect(ctx.destination);
+  jawOsc.start(now);
+  jawOsc.stop(now + 0.19);
+
+  // CAPA 2: Crujido multi-fibra de bacon crocante y pan tostado
+  const duration = 0.34;
+  const bufferSize = Math.floor(ctx.sampleRate * duration);
+  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+
+  let pinkB0 = 0, pinkB1 = 0, pinkB2 = 0;
+  for (let i = 0; i < bufferSize; i++) {
+    const t = i / bufferSize;
+    const white = Math.random() * 2 - 1;
+    // Filtro aproximado a ruido rosa para sonar orgánico y comestible
+    pinkB0 = 0.997 * pinkB0 + white * 0.029;
+    pinkB1 = 0.985 * pinkB1 + white * 0.032;
+    pinkB2 = 0.950 * pinkB2 + white * 0.048;
+    const pink = (pinkB0 + pinkB1 + pinkB2 + white * 0.18) * 1.6;
+
+    // 4 micro-impactos de dientes rompiendo corteza y bacon
+    const burst1 = Math.exp(-Math.pow((t - 0.06) / 0.045, 2));
+    const burst2 = 0.9 * Math.exp(-Math.pow((t - 0.18) / 0.06, 2));
+    const burst3 = 0.75 * Math.exp(-Math.pow((t - 0.38) / 0.08, 2));
+    const burst4 = 0.55 * Math.exp(-Math.pow((t - 0.62) / 0.10, 2));
+
+    // Micro-textura irregular de mordida
+    const grain = (Math.random() > 0.18 ? 1 : 0.15);
+    output[i] = pink * (burst1 + burst2 + burst3 + burst4) * grain;
+  }
+
+  // Sub-capa A: Crujido agudo (bacon + corteza de parmesano)
+  const crunchHigh = ctx.createBufferSource();
+  crunchHigh.buffer = noiseBuffer;
+  const bpHigh = ctx.createBiquadFilter();
+  bpHigh.type = "bandpass";
+  bpHigh.frequency.setValueAtTime(1950, now);
+  bpHigh.frequency.exponentialRampToValueAtTime(880, now + duration);
+  bpHigh.Q.setValueAtTime(1.1, now);
+  const gainHigh = ctx.createGain();
+  gainHigh.gain.setValueAtTime(0.65, now);
+  gainHigh.gain.exponentialRampToValueAtTime(0.01, now + duration);
+  crunchHigh.connect(bpHigh);
+  bpHigh.connect(gainHigh);
+  gainHigh.connect(ctx.destination);
+  crunchHigh.start(now);
+  crunchHigh.stop(now + duration);
+
+  // Sub-capa B: Cuerpo jugoso del medallón de carne y pan de papa (formante grave-medio)
+  const crunchBody = ctx.createBufferSource();
+  crunchBody.buffer = noiseBuffer;
+  const bpBody = ctx.createBiquadFilter();
+  bpBody.type = "bandpass";
+  bpBody.frequency.setValueAtTime(520, now);
+  bpBody.frequency.exponentialRampToValueAtTime(240, now + duration);
+  bpBody.Q.setValueAtTime(1.6, now);
+  const gainBody = ctx.createGain();
+  gainBody.gain.setValueAtTime(0.75, now);
+  gainBody.gain.exponentialRampToValueAtTime(0.01, now + duration);
+  crunchBody.connect(bpBody);
+  bpBody.connect(gainBody);
+  gainBody.connect(ctx.destination);
+  crunchBody.start(now);
+  crunchBody.stop(now + duration);
+
+  // CAPA 3: Segundo golpe de mandíbula al masticar (115ms después)
+  const chewOsc = ctx.createOscillator();
+  const chewGain = ctx.createGain();
+  chewOsc.type = "sine";
+  chewOsc.frequency.setValueAtTime(125, now + 0.11);
+  chewOsc.frequency.exponentialRampToValueAtTime(42, now + 0.24);
+  chewGain.gain.setValueAtTime(0.32, now + 0.11);
+  chewGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+  chewOsc.connect(chewGain);
+  chewGain.connect(ctx.destination);
+  chewOsc.start(now + 0.11);
+  chewOsc.stop(now + 0.26);
+}
+
+/* Botón de encendido/apagado de sonido */
+$("#soundBtn").onclick = () => {
+  soundEnabled = !soundEnabled;
+  $("#soundBtn").classList.toggle("on", soundEnabled);
+  $("#soundIcon").textContent = soundEnabled ? "🔊" : "🔇";
+  $("#soundTxt").textContent = soundEnabled ? "Sonido ON" : "Silencio";
+  if (soundEnabled) playAddSound();
+};
+
+/* ───────── SISTEMA DE PARTÍCULAS Y MICRO-ANIMACIONES DE CLIC ───────── */
+/* ═══════════════════════════════════════════════════════════
+   EFECTOS VISUALES AL TOCAR (emojis que saltan, "+1", migas)
+   Se dibujan en la capa #fxLayer y se borran solos.
+   ═══════════════════════════════════════════════════════════ */
+const fxLayer = $("#fxLayer");
+
+function spawnClickParticles(x, y, mode = "burger") {
+  const emojis =
+    mode === "burger" ? ["🍔", "🍟", "🧀", "🥓", "✨"] :
+    mode === "drink"  ? ["🥤", "🧊", "✨", "🫧"] :
+    mode === "neon"   ? ["⚡", "🔥", "🍔", "✨"] :
+                        ["🍔", "🍟", "✨"];
+
+  const count = mode === "neon" ? 10 : 7;
+
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement("span");
+    el.className = "fx-particle";
+    el.textContent = emojis[i % emojis.length];
+    el.style.left = x + "px";
+    el.style.top = y + "px";
+    fxLayer.appendChild(el);
+
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+    const dist = 38 + Math.random() * 52;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist - 28;
+    const rot = (Math.random() - 0.5) * 90;
+
+    el.animate([
+      { transform: "translate(-50%, -50%) scale(0.4) rotate(0deg)", opacity: 1 },
+      { transform: `translate(calc(-50% + ${dx * 0.7}px), calc(-50% + ${dy}px)) scale(1.15) rotate(${rot * 0.6}deg)`, opacity: 1, offset: 0.45 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 34}px)) scale(0.5) rotate(${rot}deg)`, opacity: 0 }
+    ], {
+      duration: 580 + Math.random() * 180,
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+    }).onfinish = () => el.remove();
+  }
+}
+
+function spawnPlusOne(x, y, text = "+1 🍔") {
+  const el = document.createElement("div");
+  el.className = "fx-plus-one";
+  el.textContent = text;
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  fxLayer.appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+
+/* Lluvia de migas de pan de papa, cheddar y carne cuando los dientes muerden el botón */
+function spawnBiteCrumbs(x, y, comicWord) {
+  const colors = ["#ffa726", "#ffcc80", "#5d2906", "#fff8e1", "#c62828", "#ffd54f"];
+
+  for (let i = 0; i < 20; i++) {
+    const crumb = document.createElement("div");
+    crumb.className = "fx-crumb";
+    const size = 5 + Math.random() * 10;
+    crumb.style.width = size + "px";
+    crumb.style.height = (size * (0.65 + Math.random() * 0.55)) + "px";
+    crumb.style.background = colors[i % colors.length];
+    crumb.style.left = x + "px";
+    crumb.style.top = y + "px";
+    fxLayer.appendChild(crumb);
+
+    const angle = Math.random() * Math.PI * 2;
+    const velocity = 45 + Math.random() * 105;
+    const tx = Math.cos(angle) * velocity;
+    const ty = Math.sin(angle) * velocity - 38;
+    const rot = (Math.random() - 0.5) * 360;
+
+    crumb.animate([
+      { transform: "translate(-50%, -50%) scale(1) rotate(0deg)", opacity: 1 },
+      { transform: `translate(calc(-50% + ${tx * 0.65}px), calc(-50% + ${ty}px)) scale(1.15) rotate(${rot * 0.5}deg)`, opacity: 1, offset: 0.45 },
+      { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty + 80}px)) scale(0.3) rotate(${rot}deg)`, opacity: 0 }
+    ], {
+      duration: 580 + Math.random() * 220,
+      easing: "cubic-bezier(0.25, 0.9, 0.35, 1)"
+    }).onfinish = () => crumb.remove();
+  }
+
+  ["🍔", "🧀", "🥓", "🍟"].forEach((em, idx) => {
+    const p = document.createElement("span");
+    p.className = "fx-particle";
+    p.textContent = em;
+    p.style.left = x + "px";
+    p.style.top = y + "px";
+    fxLayer.appendChild(p);
+    const tx = (idx - 1.5) * 48 + (Math.random() - 0.5) * 20;
+    const ty = -60 - Math.random() * 40;
+    p.animate([
+      { transform: "translate(-50%, -50%) scale(0.5)", opacity: 1 },
+      { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(1.3)`, opacity: 1, offset: 0.5 },
+      { transform: `translate(calc(-50% + ${tx * 1.2}px), calc(-50% + ${ty + 40}px)) scale(0.4)`, opacity: 0 }
+    ], { duration: 640, easing: "ease-out" }).onfinish = () => p.remove();
+  });
+
+  if (comicWord) {
+    const comic = document.createElement("div");
+    comic.className = "fx-comic";
+    comic.textContent = comicWord;
+    comic.style.left = x + "px";
+    comic.style.top = (y - 16) + "px";
+    fxLayer.appendChild(comic);
+    setTimeout(() => comic.remove(), 760);
+  }
+}
+
+/* Interacción con el Logo Neón de ROST */
+/* ── LOGO INTERACTIVO: al tocarlo se enciende más fuerte, chispea y suena ── */
+$("#logoNeonBtn").onclick = e => {
+  const btn = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const cx = e.clientX || (rect.left + rect.width * 0.4);
+  const cy = e.clientY || (rect.top + rect.height * 0.55);
+
+  btn.classList.remove("super-glow");
+  void btn.offsetWidth;
+  btn.classList.add("super-glow");
+  playNeonSparkSound();
+  spawnClickParticles(cx, cy, "neon");
+  if (navigator.vibrate) navigator.vibrate([12, 30, 15]);
+  setTimeout(() => btn.classList.remove("super-glow"), 900);
+};
+
+document.querySelectorAll(".chip").forEach(ch => {
+  ch.onclick = e => {
+    playSoftTick(480);
+    const r = ch.getBoundingClientRect();
+    spawnClickParticles(e.clientX || (r.left + r.width / 2), e.clientY || (r.top + r.height / 2), "burger");
+  };
+});
+
+/* ═══════════════════════════════════════════════════════════
+   RENDERIZADO DE LA CARTA (CON FOTOS 100% REALES, OFERTAS Y STOCK)
+   ═══════════════════════════════════════════════════════════ */
+const controls = p => {
+  if (p.disponible === false) {
+    return `<button class="add" disabled aria-label="${p.nombre} agotada">${p.foto ? "Agotada" : "Sin stock"}</button>`;
+  }
+  return `<button class="add" data-add="${p.id}" aria-label="Agregar ${p.nombre}">${p.foto ? "Agregar" : "+"}</button>
+  <div class="step"><button data-rem="${p.id}" aria-label="Quitar uno">−</button><b data-qty="${p.id}">1</b><button data-add="${p.id}" aria-label="Sumar uno">+</button></div>`;
+};
+
+const burgerHTML = p => {
+  const hasPromo = p.antes && Number(p.antes) > Number(p.precio);
+  const pct = hasPromo ? Math.round((1 - p.precio / p.antes) * 100) : 0;
+  const isSoldOut = p.disponible === false;
+
+  return `<article class="burger in ${isSoldOut ? "sold-out" : ""}" data-card="${p.id}">
+    <div class="ph">
+      <img
+        src="${p.foto}"
+        data-file="${p.foto}"
+        onerror="resolveRealPhoto(this)"
+        alt="${p.nombre}"
+        loading="lazy"
+      >
+      ${p.etiqueta ? `<span class="tag">${p.etiqueta}</span>` : ""}
+      ${hasPromo ? `<span class="promo-pill">🔥 ${pct}% OFF</span>` : ""}
+      ${isSoldOut ? `<div class="soldout-overlay"><span class="soldout-badge">🚫 No disponible hoy</span></div>` : ""}
+      <span class="qty-badge" data-badge="${p.id}">1 en tu pedido</span>
+    </div>
+    <div class="bd">
+      <h3>${p.nombre}</h3>
+      <p>${p.desc || ""}</p>
+      <div class="row">
+        <div class="price-box">
+          ${hasPromo ? `<span class="old-price">${money(p.antes)}</span>` : ""}
+          <span class="price">${money(p.precio)}</span>
+        </div>
+        <div>${controls(p)}</div>
+      </div>
+    </div>
+  </article>`;
+};
+
+const drinkHTML = p => {
+  const hasPromo = p.antes && Number(p.antes) > Number(p.precio);
+  const pct = hasPromo ? Math.round((1 - p.precio / p.antes) * 100) : 0;
+  const isSoldOut = p.disponible === false;
+
+  return `<div class="drink ${isSoldOut ? "sold-out" : ""}" data-card="${p.id}">
+    <div>
+      <b>${p.nombre}</b>
+      ${hasPromo ? `<small><s>${money(p.antes)}</s></small> ` : ""}
+      <small>${money(p.precio)}</small>
+      ${hasPromo ? `<span class="off">${pct}% DESC.</span>` : ""}
+    </div>
+    <div>${controls(p)}</div>
+  </div>`;
+};
+
+$("#nav").innerHTML = CATEGORIAS.map(([k, t], idx) => `<a href="#${k}" data-nav="${k}" class="${idx === 0 ? "on" : ""}">${t}</a>`).join("");
+
+function renderCatalog() {
+  $("#app").innerHTML = CATEGORIAS.map(([k, t, s]) => {
+    const items = PRODUCTOS.filter(p => p.cat === k);
+    if (!items.length) return "";
+    const body = items.some(p => p.foto)
+      ? items.map(p => p.foto ? burgerHTML(p) : drinkHTML(p)).join("")
+      : `<div class="drinks">${items.map(drinkHTML).join("")}</div>`;
+    return `<section id="${k}"><div class="sh"><h2>${t}</h2>${s ? `<p class="sub">${s}</p>` : ""}</div>${body}</section>`;
+  }).join("");
+
+  // Limpiar del carrito si algún producto pasó a no disponible
+  Object.keys(cart).forEach(id => {
+    const prod = find(id);
+    if (!prod || prod.disponible === false) delete cart[id];
+  });
+
+  observeSections();
+  draw();
+}
+
+/* Actualiza carrito, botones y totales */
+/* ── draw(): REDIBUJA TODO LO DEL CARRITO ──
+   Actualiza la barra de abajo, los contadores de cada tarjeta, la lista del
+   pedido y el total. Se llama cada vez que cambia algo del carrito.
+   ⚠ NO TOCAR: casi todo depende de esta función. ── */
+function draw(animatedId = null) {
+  const ids = Object.keys(cart).filter(k => cart[k] > 0 && find(k) && find(k).disponible !== false);
+  const n = ids.reduce((a, k) => a + cart[k], 0);
+  const t = ids.reduce((a, k) => a + cart[k] * find(k).precio, 0);
+
+  $("#bar").classList.toggle("on", n > 0);
+  $("#bn").textContent = n + (n == 1 ? " producto" : " productos") + " · Ver pedido";
+  $("#bt").textContent = $("#tt").textContent = money(t);
+
+  document.querySelectorAll("[data-card]").forEach(c => {
+    const id = c.dataset.card;
+    const q = cart[id] || 0;
+    c.classList.toggle("has", q > 0);
+
+    const b = c.querySelector("[data-qty]");
+    if (b) {
+      b.textContent = q;
+      if (animatedId && String(animatedId) === String(id)) {
+        b.classList.remove("num-pop");
+        void b.offsetWidth;
+        b.classList.add("num-pop");
+      }
+    }
+
+    const badge = c.querySelector("[data-badge]");
+    if (badge) {
+      badge.textContent = `${q} en tu pedido`;
+    }
+  });
+
+  $("#items").innerHTML = ids.map(k => {
+    const p = find(k);
+    return `<div class="it">
+      <span>${p.nombre}<em>${money(p.precio)} c/u</em></span>
+      <button class="qb" data-rem="${k}" aria-label="Quitar">−</button>
+      <b class="q">${cart[k]}</b>
+      <button class="qb" data-add="${k}" aria-label="Sumar">+</button>
+    </div>`;
+  }).join("");
+
+  if (!n) closeSheet();
+  return { ids, t };
+}
+
+/* ── AGREGAR AL CARRITO CON ANIMACIÓN: suma 1, suena, saltan emojis y rebota la tarjeta ── */
+function addItemWithJuice(id, clientX, clientY) {
+  const prod = find(id);
+  if (!prod || prod.disponible === false) return;
+
+  cart[id] = (cart[id] || 0) + 1;
+  draw(id);
+
+  playAddSound();
+  if (navigator.vibrate) navigator.vibrate(12);
+
+  if (clientX && clientY) {
+    spawnClickParticles(clientX, clientY, prod.foto ? "burger" : "drink");
+    spawnPlusOne(clientX, clientY, prod.foto ? "+1 🍔" : "+1 🥤");
+  }
+
+  const card = document.querySelector(`[data-card="${id}"]`);
+  if (card) {
+    card.classList.remove("juicy-pop");
+    void card.offsetWidth;
+    card.classList.add("juicy-pop");
+  }
+
+  $("#bar").classList.remove("bump");
+  void $("#bar").offsetWidth;
+  $("#bar").classList.add("bump");
+}
+
+/* ── CLICS EN LOS BOTONES + / − DE TODA LA PÁGINA (un solo oyente para todos) ── */
+document.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.add) {
+    const rect = b.getBoundingClientRect();
+    const x = e.clientX || (rect.left + rect.width / 2);
+    const y = e.clientY || (rect.top + rect.height / 2);
+    addItemWithJuice(b.dataset.add, x, y);
+    return;
+  }
+  if (b.dataset.rem) {
+    const id = b.dataset.rem;
+    cart[id] = Math.max(0, (cart[id] || 0) - 1);
+    playSoftTick(230);
+    if (navigator.vibrate) navigator.vibrate(6);
+    draw(id);
+    return;
+  }
+});
+
+/* ───────── SELECTOR RETIRAR EN LOCAL VS ENVÍO A DOMICILIO ───────── */
+/* ── RETIRO / ENVÍO: muestra u oculta el campo de dirección del pedido ── */
+function setDeliveryMode(mode) {
+  deliveryMode = mode;
+  $("#tabRetiro").classList.toggle("active", mode === "retiro");
+  $("#tabEnvio").classList.toggle("active", mode === "envio");
+  $("#addressWrap").classList.toggle("show", mode === "envio");
+  playSoftTick(390);
+  if (mode === "envio") {
+    setTimeout(() => $("#addressInput").focus(), 120);
+  }
+}
+
+$("#tabRetiro").onclick = () => setDeliveryMode("retiro");
+$("#tabEnvio").onclick = () => setDeliveryMode("envio");
+
+/* ── PANEL DEL PEDIDO (el que sube desde abajo): abrir y cerrar ── */
+function openSheet() {
+  $("#sheet").classList.add("on");
+  document.body.classList.add("locked");
+  playSoftTick(420);
+}
+function closeSheet() {
+  $("#sheet").classList.remove("on");
+  document.body.classList.remove("locked");
+}
+
+$("#bar").onclick = () => openSheet();
+$("#cl").onclick = () => closeSheet();
+$("#sheet").onclick = e => { if (e.target.id === "sheet") closeSheet(); };
+
+/* ═══════════════════════════════════════════════════════════
+   BOTÓN DE WHATSAPP CON 3 MORDIDAS DE DIENTES Y SONIDO DE HAMBURGUESA
+   ═══════════════════════════════════════════════════════════ */
+let isEatingButton = false;
+
+$("#send").onclick = () => {
+  if (isEatingButton) return;
+  const { ids, t } = draw();
+  if (!ids.length) return;
+
+  const addressVal = $("#addressInput").value.trim();
+  const clientVal = $("#clientNameInput").value.trim();
+  const noteVal = $("#note").value.trim();
+
+  // Validar dirección obligatoria si eligió Envío a domicilio
+  if (deliveryMode === "envio" && !addressVal) {
+    const addrInput = $("#addressInput");
+    addrInput.classList.remove("error-shake");
+    void addrInput.offsetWidth;
+    addrInput.classList.add("error-shake");
+    addrInput.focus();
+    playSoftTick(160);
+    showToast("🛵 ¡Falta poner tu dirección para el envío!");
+    if (navigator.vibrate) navigator.vibrate([40, 40, 40]);
+    return;
+  }
+
+  isEatingButton = true;
+  const sendBtn = $("#send");
+  const eatenMsg = $("#eatenMsg");
+  const rect = sendBtn.getBoundingClientRect();
+
+  // Armar el mensaje de WhatsApp con Retiro o Envío + Dirección
+  let headerLines = `Hola ROST! 🍔 Quiero hacer este pedido:\n`;
+  if (clientVal) headerLines += `👤 *Cliente:* ${clientVal}\n`;
+  if (deliveryMode === "envio") {
+    headerLines += `🛵 *Modalidad:* Envío a domicilio\n📍 *Dirección:* ${addressVal}\n`;
+  } else {
+    headerLines += `🏪 *Modalidad:* Retiro en el local\n`;
+  }
+
+  let itemsLines = ids.map(k => `• ${cart[k]}x ${find(k).nombre} (${money(cart[k] * find(k).precio)})`).join("\n");
+  let m = `${headerLines}\n${itemsLines}\n\n💰 *Total: ${money(t)}*`;
+  if (noteVal) m += `\n📝 *Aclaraciones:* ${noteVal}`;
+
+  // Link que abre WhatsApp con el pedido ya escrito (usa el número WA_NUMBER de arriba)
+  const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(m)}`;
+
+  // ── BOCADO 1 (0 ms): Mordida de dientes a la derecha ──
+  sendBtn.classList.remove("bite-1", "bite-2", "bite-3");
+  void sendBtn.offsetWidth;
+  sendBtn.classList.add("bite-1");
+  playBurgerBiteSound(1);
+  if (navigator.vibrate) navigator.vibrate([35, 35, 25]);
+  spawnBiteCrumbs(rect.right - rect.width * 0.18, rect.top + rect.height * 0.45, "¡CHOMP! 😋");
+
+  // ── BOCADO 2 (450 ms): Mordida de dientes a la izquierda y centro ──
+  setTimeout(() => {
+    sendBtn.classList.add("bite-2");
+    playBurgerBiteSound(2);
+    if (navigator.vibrate) navigator.vibrate([40, 30, 30]);
+    spawnBiteCrumbs(rect.left + rect.width * 0.35, rect.top + rect.height * 0.5, "¡CRUNCH! 🍔");
+  }, 450);
+
+  // ── BOCADO 3 (900 ms): ¡Se devora el último pedacito del botón! ──
+  setTimeout(() => {
+    sendBtn.classList.add("bite-3");
+    eatenMsg.classList.add("show");
+    playBurgerBiteSound(3);
+    if (navigator.vibrate) navigator.vibrate([50, 40, 65]);
+    spawnBiteCrumbs(rect.left + rect.width * 0.5, rect.top + rect.height * 0.5, "¡ADENTRO! 🔥");
+  }, 900);
+
+  // ── REDIRECCIÓN A WHATSAPP (1380 ms) ──
+  setTimeout(() => {
+    window.open(waUrl, "_blank");
+
+    setTimeout(() => {
+      sendBtn.classList.remove("bite-1", "bite-2", "bite-3");
+      eatenMsg.classList.remove("show");
+      isEatingButton = false;
+    }, 650);
+  }, 1380);
+};
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLL CORREGIDO Y FLUIDO (SIN SALTOS NI BLOQUEOS)
+   ═══════════════════════════════════════════════════════════ */
+const navContainer = $("#nav");
+let isManualNavScrolling = false;
+let manualScrollTimer = null;
+let navIO = null;
+
+function setActiveNavPill(catId) {
+  const pills = document.querySelectorAll("[data-nav]");
+  pills.forEach(a => {
+    const isOn = a.dataset.nav === catId;
+    a.classList.toggle("on", isOn);
+    if (isOn && navContainer) {
+      const targetLeft = a.offsetLeft - (navContainer.clientWidth / 2) + (a.offsetWidth / 2);
+      navContainer.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+    }
+  });
+}
+
+navContainer.addEventListener("click", e => {
+  const link = e.target.closest("[data-nav]");
+  if (!link) return;
+  e.preventDefault();
+
+  const catId = link.dataset.nav;
+  const targetSec = document.getElementById(catId);
+  if (!targetSec) return;
+
+  playSoftTick(380);
+  isManualNavScrolling = true;
+  clearTimeout(manualScrollTimer);
+
+  setActiveNavPill(catId);
+
+  const navHeight = navContainer.parentElement.offsetHeight || 64;
+  const topY = targetSec.getBoundingClientRect().top + window.pageYOffset - navHeight - 8;
+  window.scrollTo({ top: Math.max(0, topY), behavior: "smooth" });
+
+  manualScrollTimer = setTimeout(() => {
+    isManualNavScrolling = false;
+  }, 650);
+});
+
+function observeSections() {
+  if (navIO) navIO.disconnect();
+  navIO = new IntersectionObserver(es => {
+    if (isManualNavScrolling) return;
+    es.forEach(x => {
+      if (x.isIntersecting) {
+        setActiveNavPill(x.target.id);
+      }
+    });
+  }, { rootMargin: "-25% 0px -65% 0px" });
+
+  document.querySelectorAll("section").forEach(s => navIO.observe(s));
+}
+
+/* Inicializar aplicación */
+/* ── NEÓN: pausar el titileo cuando el logo no se ve (más fluido el scroll y menos batería) ──
+   ⚠ NO TOCAR */
+const heroEl = document.querySelector(".hero");
+if (heroEl && "IntersectionObserver" in window) {
+  new IntersectionObserver(es => heroEl.classList.toggle("offscreen", !es[0].isIntersecting)).observe(heroEl);
+}
+
+renderCatalog();
+</script>
+</body>
+</html>
