@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <title>ROST Hamburguesas | Pedí online</title>
 <!-- ═══════════════════════════════════════════════════════════
@@ -91,6 +91,11 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Sin zoom por doble toque (el scroll y los toques rápidos siguen andando normal) */
+html, body, button, a, .card, [data-nav] {
+  touch-action: manipulation;
 }
 
 /* Scroll corregido: sin bloqueos ni saltos entre menú y ventana */
@@ -1026,7 +1031,7 @@ footer {
   border-radius: 14px;
   padding: 12px 14px;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px; /* 16px evita el zoom automático de iOS al escribir */
   margin-top: 10px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -1067,7 +1072,7 @@ textarea {
   padding: 12px 14px;
   margin: 10px 0 14px;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px; /* 16px evita el zoom automático de iOS al escribir */
   min-height: 66px;
   resize: none;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -1529,7 +1534,7 @@ window.resolveRealPhoto = function(img) {
    Ejemplo Argentina (Río Negro, 0298 15-412345): "5492984412345"
    Si queda vacío ("") el botón de pedir NO va a funcionar.
    ═══════════════════════════════════════════════════════════ */
-let WA_NUMBER = "9542984333857";
+let WA_NUMBER = "";
 
 /* ═══════════════════════════════════════════════════════════
    ✎ EDITÁ ACÁ ─ 2) CATEGORÍAS (las secciones del menú)
@@ -2260,7 +2265,18 @@ $("#send").onclick = () => {
 
   // ── REDIRECCIÓN A WHATSAPP (1380 ms) ──
   setTimeout(() => {
-    window.open(waUrl, "_blank");
+    // En celular los navegadores bloquean window.open() cuando se llama dentro de un
+    // setTimeout (ya no cuenta como "toque del usuario"), por eso no abría WhatsApp.
+    // Solución: en celular navegamos directo al link (abre la app de WhatsApp);
+    // en PC abrimos pestaña nueva y, si el navegador la bloquea, caemos al mismo método.
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent)
+      || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); // iPad moderno
+    if (isMobile) {
+      window.location.href = waUrl;
+    } else {
+      const w = window.open(waUrl, "_blank");
+      if (!w) window.location.href = waUrl;
+    }
 
     setTimeout(() => {
       sendBtn.classList.remove("bite-1", "bite-2", "bite-3");
@@ -2269,6 +2285,20 @@ $("#send").onclick = () => {
     }, 650);
   }, 1380);
 };
+
+// iOS Safari ignora user-scalable=no: bloqueamos el zoom por pellizco a mano
+["gesturestart", "gesturechange", "gestureend"].forEach(ev =>
+  document.addEventListener(ev, e => e.preventDefault(), { passive: false })
+);
+
+// Al volver desde WhatsApp (botón "atrás"), dejar el botón listo otra vez
+window.addEventListener("pageshow", e => {
+  if (!e.persisted) return;
+  const b = $("#send"), m = $("#eatenMsg");
+  if (b) b.classList.remove("bite-1", "bite-2", "bite-3");
+  if (m) m.classList.remove("show");
+  isEatingButton = false;
+});
 
 /* ═══════════════════════════════════════════════════════════
    SCROLL CORREGIDO Y FLUIDO (SIN SALTOS NI BLOQUEOS)
