@@ -1329,40 +1329,25 @@ button:focus-visible, a:focus-visible {
   .burger { opacity: 1; transform: none; }
 }
 
-/* ═══ 🎃 TEMA HALLOWEEN (se activa con HALLOWEEN = true en el script) ═══ */
-body.halloween { --or:#ff8a1f; --or-glow:#ff5a00; --gr:#a6ff3c; --line:#2a1414; --card:#0e0909; --card-hover:#150c0c;
-  background: radial-gradient(ellipse at 50% -10%, rgba(120,0,0,.38), transparent 60%), radial-gradient(ellipse at 100% 100%, rgba(255,70,0,.07), transparent 50%), #030202 fixed; }
-.halloween .sh h2::before { content: "🎃 "; }
-.halloween .sh h2::after { content: " 🕷️"; }
-.halloween .rost-logo-stage { filter: drop-shadow(0 0 24px rgba(170,18,18,.5)); }
-.halloween .burger, .halloween .drink { border-color: rgba(170,18,18,.28); }
-#hwDecor { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
-.hw-fog { position: absolute; left: -20%; right: -20%; bottom: 0; height: 38%; background: radial-gradient(ellipse at 50% 100%, rgba(170,18,18,.26), transparent 70%); animation: hwFog 9s ease-in-out infinite alternate; }
-@keyframes hwFog { from { transform: translateX(-4%); opacity: .6; } to { transform: translateX(4%); opacity: 1; } }
-.hw-bat { position: absolute; left: 0; font-size: 22px; opacity: .85; animation: hwFly linear infinite; }
-@keyframes hwFly { 0% { transform: translate(-12vw,0) scaleX(1); } 25% { transform: translate(22vw,-26px); } 50% { transform: translate(55vw,14px); } 75% { transform: translate(85vw,-22px); } 100% { transform: translate(115vw,0); } }
-.hw-web { position: absolute; top: -8px; font-size: 62px; opacity: .5; }
-.hw-ghost { position: absolute; top: 22%; right: 6px; font-size: 30px; opacity: .8; animation: hwGhost 4s ease-in-out infinite; }
-@keyframes hwGhost { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-14px) rotate(6deg); } }
-.hw-flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 60; }
-.hw-ribbon { animation: hwShake 3.5s infinite; margin: 12px auto 0; padding: 9px 14px; border-radius: 14px; text-align: center; font-weight: 800; font-size: 14px; color: #fff;
-  background: linear-gradient(90deg, rgba(170,18,18,.25), rgba(255,138,31,.25)); border: 1.5px solid rgba(170,18,18,.6); box-shadow: 0 0 18px rgba(170,18,18,.35); }
-
-/* ── MÁS TERROR: viñeta, sangre, luces que fallan, ojos, susto ── */
-.hw-vig { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 32%, rgba(0,0,0,.9) 100%); }
-.hw-dark { position: absolute; inset: 0; background: #000; opacity: 0; animation: hwDark 9s infinite; }
-@keyframes hwDark { 0%,87%,100% { opacity: 0; } 88% { opacity: .65; } 89% { opacity: .05; } 90% { opacity: .75; } 92% { opacity: .1; } 93% { opacity: 0; } }
-.hw-blood { position: absolute; top: 0; left: 0; right: 0; height: 46px; transform-origin: top; animation: hwDrip 7s ease-in-out infinite alternate;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='46'%3E%3Cpath d='M0 0H120V8H100V24a4 4 0 0 1-8 0V8H70V38a5 5 0 0 1-10 0V8H30V16a3 3 0 0 1-6 0V8H0Z' fill='%239b0000'/%3E%3C/svg%3E") repeat-x top / 120px 46px; }
-@keyframes hwDrip { from { transform: scaleY(.7); } to { transform: scaleY(1.2); } }
-.hw-eyes { position: absolute; width: 34px; height: 10px; opacity: 0; animation: hwEyes 3.2s ease-in-out forwards; }
-.hw-eyes::before, .hw-eyes::after { content: ""; position: absolute; top: 0; width: 9px; height: 9px; border-radius: 50%; background: #ff2a2a; box-shadow: 0 0 10px 3px rgba(255,40,40,.9); }
-.hw-eyes::before { left: 0; } .hw-eyes::after { right: 0; }
-@keyframes hwEyes { 0% { opacity: 0; } 15%,40% { opacity: 1; transform: scaleY(1); } 45% { transform: scaleY(.1); } 50%,70% { transform: scaleY(1); opacity: 1; } 100% { opacity: 0; } }
-@keyframes hwShake { 0%,92%,100% { transform: translate(0,0); } 94% { transform: translate(-2px,1px); } 96% { transform: translate(2px,-1px); } 98% { transform: translate(-1px,0); } }
-.hw-pulse { position: fixed; inset: 0; pointer-events: none; z-index: 55; box-shadow: inset 0 0 120px 40px rgba(190,0,0,.85); opacity: 0; }
-.hw-jump { position: fixed; inset: 0; z-index: 70; pointer-events: none; display: flex; align-items: center; justify-content: center; background: rgba(140,0,0,.55); font-size: 52vmin; }
-@media (prefers-reduced-motion: reduce) { .hw-bat, .hw-ghost, .hw-fog { animation: none; } }
+/* ═══ 🎃 TEMA HALLOWEEN (limpio): la estética de siempre + SANGRE que chorrea de botones y tarjetas ═══ */
+.halloween { --blood-btn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 46' width='520' height='46'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23b8000f'/%3E%3Cstop offset='1' stop-color='%23690008'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='url(%23g)'%3E%3Cpath d='M27 0C27 9.0 25.5 9.0 25.5 13.5A4.5 4.5 0 0 0 34.5 13.5C34.5 9.0 33 9.0 33 0Z'/%3E%3Cpath d='M67.5 0C67.5 16.0 66 24 66 28A4 4 0 0 0 74 28C74 24 72.5 16.0 72.5 0Z'/%3E%3Cpath d='M114 0C114 7.0 113 4 113 9A5 5 0 0 0 123 9C123 4 122 7.0 122 0Z'/%3E%3Cpath d='M147.5 0C147.5 12.0 146.5 17.0 146.5 20.5A3.5 3.5 0 0 0 153.5 20.5C153.5 17.0 152.5 12.0 152.5 0Z'/%3E%3Cpath d='M202 0C202 19.0 200 28 200 33A5 5 0 0 0 210 33C210 28 208 19.0 208 0Z'/%3E%3Cpath d='M248 0C248 8.0 247 10 247 13A3 3 0 0 0 253 13C253 10 252 8.0 252 0Z'/%3E%3Cpath d='M286.5 0C286.5 14.0 285.5 19.0 285.5 23.5A4.5 4.5 0 0 0 294.5 23.5C294.5 19.0 293.5 14.0 293.5 0Z'/%3E%3Cpath d='M337.5 0C337.5 10.0 336.5 13.0 336.5 16.5A3.5 3.5 0 0 0 343.5 16.5C343.5 13.0 342.5 10.0 342.5 0Z'/%3E%3Cpath d='M382 0C382 17.0 380.5 25.0 380.5 29.5A4.5 4.5 0 0 0 389.5 29.5C389.5 25.0 388 17.0 388 0Z'/%3E%3Cpath d='M428 0C428 6.0 427 6 427 9A3 3 0 0 0 433 9C433 6 432 6.0 432 0Z'/%3E%3Cpath d='M466.5 0C466.5 13.0 465.5 17.0 465.5 21.5A4.5 4.5 0 0 0 474.5 21.5C474.5 17.0 473.5 13.0 473.5 0Z'/%3E%3Cpath d='M502.5 0C502.5 9.0 501.5 11.0 501.5 14.5A3.5 3.5 0 0 0 508.5 14.5C508.5 11.0 507.5 9.0 507.5 0Z'/%3E%3C/g%3E%3Cpath d='M27.8 3V9.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='28.425' cy='13.05' rx='1.2600000000000002' ry='1.89' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M68.3 3V24' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='68.6' cy='27.6' rx='1.12' ry='1.68' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M114.8 3V4' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='116.25' cy='8.5' rx='1.4000000000000001' ry='2.1' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M148.3 3V17.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='148.775' cy='20.15' rx='0.9800000000000001' ry='1.47' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M202.8 3V28' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='203.25' cy='32.5' rx='1.4000000000000001' ry='2.1' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M248.8 3V10' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='248.95' cy='12.7' rx='0.8400000000000001' ry='1.26' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M287.3 3V19.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='288.425' cy='23.05' rx='1.2600000000000002' ry='1.89' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M338.3 3V13.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='338.775' cy='16.15' rx='0.9800000000000001' ry='1.47' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M382.8 3V25.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='383.425' cy='29.05' rx='1.2600000000000002' ry='1.89' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M428.8 3V6' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='428.95' cy='8.7' rx='0.8400000000000001' ry='1.26' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M467.3 3V17.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='468.425' cy='21.05' rx='1.2600000000000002' ry='1.89' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M503.3 3V11.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='503.775' cy='14.149999999999999' rx='0.9800000000000001' ry='1.47' fill='%23fff' fill-opacity='.35'/%3E%3C/svg%3E"); --blood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 46' width='520' height='46'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23b8000f'/%3E%3Cstop offset='1' stop-color='%23690008'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='url(%23g)'%3E%3Cpath d='M0 0H520V5Q500 9 480 5Q460 9 440 5Q420 9 400 5Q380 9 360 5Q340 9 320 5Q300 9 280 5Q260 9 240 5Q220 9 200 5Q180 9 160 5Q140 9 120 5Q100 9 80 5Q60 9 40 5Q20 9 0 5Z'/%3E%3Cpath d='M27 3C27 9.0 25.5 9.0 25.5 13.5A4.5 4.5 0 0 0 34.5 13.5C34.5 9.0 33 9.0 33 3Z'/%3E%3Cpath d='M67.5 3C67.5 16.0 66 24 66 28A4 4 0 0 0 74 28C74 24 72.5 16.0 72.5 3Z'/%3E%3Cpath d='M114 3C114 7.0 113 4 113 9A5 5 0 0 0 123 9C123 4 122 7.0 122 3Z'/%3E%3Cpath d='M147.5 3C147.5 12.0 146.5 17.0 146.5 20.5A3.5 3.5 0 0 0 153.5 20.5C153.5 17.0 152.5 12.0 152.5 3Z'/%3E%3Cpath d='M202 3C202 19.0 200 28 200 33A5 5 0 0 0 210 33C210 28 208 19.0 208 3Z'/%3E%3Cpath d='M248 3C248 8.0 247 10 247 13A3 3 0 0 0 253 13C253 10 252 8.0 252 3Z'/%3E%3Cpath d='M286.5 3C286.5 14.0 285.5 19.0 285.5 23.5A4.5 4.5 0 0 0 294.5 23.5C294.5 19.0 293.5 14.0 293.5 3Z'/%3E%3Cpath d='M337.5 3C337.5 10.0 336.5 13.0 336.5 16.5A3.5 3.5 0 0 0 343.5 16.5C343.5 13.0 342.5 10.0 342.5 3Z'/%3E%3Cpath d='M382 3C382 17.0 380.5 25.0 380.5 29.5A4.5 4.5 0 0 0 389.5 29.5C389.5 25.0 388 17.0 388 3Z'/%3E%3Cpath d='M428 3C428 6.0 427 6 427 9A3 3 0 0 0 433 9C433 6 432 6.0 432 3Z'/%3E%3Cpath d='M466.5 3C466.5 13.0 465.5 17.0 465.5 21.5A4.5 4.5 0 0 0 474.5 21.5C474.5 17.0 473.5 13.0 473.5 3Z'/%3E%3Cpath d='M502.5 3C502.5 9.0 501.5 11.0 501.5 14.5A3.5 3.5 0 0 0 508.5 14.5C508.5 11.0 507.5 9.0 507.5 3Z'/%3E%3C/g%3E%3Cpath d='M27.8 7V9.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='28.425' cy='13.05' rx='1.2600000000000002' ry='1.89' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M68.3 7V24' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='68.6' cy='27.6' rx='1.12' ry='1.68' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M114.8 7V4' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='116.25' cy='8.5' rx='1.4000000000000001' ry='2.1' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M148.3 7V17.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='148.775' cy='20.15' rx='0.9800000000000001' ry='1.47' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M202.8 7V28' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='203.25' cy='32.5' rx='1.4000000000000001' ry='2.1' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M248.8 7V10' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='248.95' cy='12.7' rx='0.8400000000000001' ry='1.26' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M287.3 7V19.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='288.425' cy='23.05' rx='1.2600000000000002' ry='1.89' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M338.3 7V13.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='338.775' cy='16.15' rx='0.9800000000000001' ry='1.47' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M382.8 7V25.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='383.425' cy='29.05' rx='1.2600000000000002' ry='1.89' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M428.8 7V6' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='428.95' cy='8.7' rx='0.8400000000000001' ry='1.26' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M467.3 7V17.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='468.425' cy='21.05' rx='1.2600000000000002' ry='1.89' fill='%23fff' fill-opacity='.35'/%3E%3Cpath d='M503.3 7V11.0' stroke='%23ff5a5a' stroke-opacity='.5' stroke-width='.9' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='503.775' cy='14.149999999999999' rx='0.9800000000000001' ry='1.47' fill='%23fff' fill-opacity='.35'/%3E%3C/svg%3E"); }
+.halloween .burger::after, .halloween .cartbar::after, .halloween .add::after, .halloween .send::after {
+  content: ""; position: absolute; pointer-events: none; z-index: 3; background-image: var(--blood); background-repeat: repeat-x;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.6)); transform-origin: top; animation: hwDrip 8s ease-in-out infinite alternate; }
+.halloween .burger { position: relative; }
+.halloween .burger .tag, .halloween .burger .promo-pill, .halloween .burger .qty-badge { z-index: 5; }
+/* tarjetas: chorrea desde el borde de arriba, sobre la foto */
+.halloween .burger::after { left: 0; right: 0; top: 0; height: 46px; background-size: 520px 46px; }
+/* botones: cuelga del borde de abajo */
+.halloween .add, .halloween .send { overflow: visible; }
+.halloween .add::after, .halloween .send::after { background-image: var(--blood-btn); left: 14px; right: 14px; top: calc(100% - 9px); height: 30px; background-size: 250px 26px; background-position: 0 0; }
+.halloween .send::after { left: 22px; right: 22px; top: calc(100% - 12px); height: 38px; background-size: 330px 30px; background-position: 0 0; }
+/* barra del carrito: tira finita arriba, sin tapar el texto */
+.halloween .cartbar::after { left: 16px; right: 16px; top: 0; height: 17px; background-size: 200px 17.7px; }
+.hw-ribbon-in { padding: 10px 14px; border-radius: 14px; text-align: center; font-weight: 800; font-size: 15px; letter-spacing: .02em; color: #fff; background: #120707; border: 1.5px solid #7a0b0b; }
+.hw-ribbon { margin-top: 12px; }
+@keyframes hwDrip { from { transform: scaleY(.85); } to { transform: scaleY(1.12); } }
+@media (prefers-reduced-motion: reduce) { .halloween *::after { animation: none !important; } }
 </style>
 <script>
 /* ═══════════════════════════════════════════════════════════
@@ -2451,29 +2436,17 @@ if (heroEl && "IntersectionObserver" in window) {
    Los sonidos reemplazan a los de siempre (mismos nombres) mientras HALLOWEEN sea true. */
 if (HALLOWEEN) {
   document.body.classList.add("halloween");
-  document.title = "🎃 " + document.title;
+  document.title = "💀 " + document.title;
 
-  const deco = document.createElement("div");
-  deco.id = "hwDecor";
-  deco.setAttribute("aria-hidden", "true");
-  deco.innerHTML = '<div class="hw-vig"></div><div class="hw-dark"></div><div class="hw-blood"></div><div class="hw-fog"></div><span class="hw-web" style="left:-4px">🕸️</span><span class="hw-web" style="right:-4px;transform:scaleX(-1)">🕸️</span><span class="hw-ghost">👻</span>' +
-    [0,1,2,3].map(i => `<span class="hw-bat" style="top:${8 + i * 17}%;animation-duration:${14 + i * 5}s;animation-delay:${i * 3.5}s">🦇</span>`).join("");
-  document.body.appendChild(deco);
 
   const rib = document.createElement("div");
   rib.className = "hw-ribbon wrap";
-  rib.textContent = "💀 Entrá bajo tu propio riesgo… las hamburguesas muerden 🩸";
+  rib.innerHTML = '<div class="hw-ribbon-in">💀 Pedí bajo tu propio riesgo, Feliz Halloween. 🩸</div>';
   $("#closedBanner").before(rib);
   $("#closedBanner").innerHTML = "<b>💀 Silencio… hasta los muertos descansan</b><small>Por ahora no estamos tomando pedidos. ¡Volvé en un ratito… si te animás!</small>";
   const ci = document.querySelector(".cartbar-icon"); if (ci) ci.textContent = "🎃";
   const em = $("#eatenMsg"); if (em) em.textContent = "💀 ¡NO HAY VUELTA ATRÁS! Abriendo WhatsApp...";
 
-  // relámpago ocasional (solo luz, sin sonido)
-  const hwFlash = () => {
-    const f = document.createElement("div"); f.className = "hw-flash"; document.body.appendChild(f);
-    f.animate([{opacity:0},{opacity:.45},{opacity:0},{opacity:.3},{opacity:0}], { duration: 460 }).onfinish = () => f.remove();
-  };
-  setInterval(() => { if (!document.hidden && Math.random() < .5) hwFlash(); }, 30000);
 
   // herramientas de sonido
   const hwTone = (c, type, f0, f1, t, d, v) => { const o = c.createOscillator(), g = c.createGain(); o.type = type;
@@ -2503,15 +2476,7 @@ if (HALLOWEEN) {
     g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
     o.connect(g); g.connect(c.destination); o.start(t); l.start(t); o.stop(t + d + .02); l.stop(t + d + .02);
     hwNoise(c, t, d, 320, 1.5, v * .8); };
-  const hwPulse = () => { const p = document.createElement("div"); p.className = "hw-pulse"; document.body.appendChild(p);
-    p.animate([{opacity:0},{opacity:1},{opacity:0}], { duration: 380 }).onfinish = () => p.remove(); };
-  const hwJump = emoji => { const j = document.createElement("div"); j.className = "hw-jump"; j.textContent = emoji; document.body.appendChild(j);
-    j.animate([{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"scale(1.1)",offset:.25},{opacity:1,transform:"scale(1.35)",offset:.7},{opacity:0,transform:"scale(1.6)"}], { duration: 900 }).onfinish = () => j.remove();
-    if (navigator.vibrate) navigator.vibrate([90, 40, 90, 40, 260]); };
 
-  // ojos rojos que aparecen en la oscuridad
-  setInterval(() => { if (document.hidden) return; const e = document.createElement("span"); e.className = "hw-eyes";
-    e.style.left = (6 + Math.random() * 82) + "%"; e.style.top = (14 + Math.random() * 70) + "%"; deco.appendChild(e); setTimeout(() => e.remove(), 3300); }, 7000);
 
   // RISA DE BRUJA: "je-je-je-je… jiiiiii" (voz aguda áspera filtrada + aire)
   const hwCackle = (c, t, v) => {
@@ -2530,7 +2495,7 @@ if (HALLOWEEN) {
 
   // SUMAR AL CARRITO: golpe de graves + un susto al azar (4 variantes), más pulso rojo
   playAddSound = function () { const c = getAudio(); if (!c) return; const n = c.currentTime;
-    hwTone(c, "sine", 70, 28, n, .35, .45); hwPulse();
+    hwTone(c, "sine", 70, 28, n, .35, .45);
     const k = Math.floor(Math.random() * 4);
     if (k === 0) { hwScreech(c, n, .45, 1300, 2100, .05); }                                            // chillido de violín
     else if (k === 1) { hwWail(c, n, .75, 210, 120, .22); hwNoise(c, n, .5, 3600, 4, .16); }           // gemido + susurro
@@ -2541,15 +2506,15 @@ if (HALLOWEEN) {
     hwTone(c, "sawtooth", freq * .5, 70, n, .09, .06); hwNoise(c, n, .05, 2500, 1, .05); };
   // tocar el logo: rayo + trueno + aullido de fantasma
   playNeonSparkSound = function () { const c = getAudio(); if (!c) return; const n = c.currentTime;
-    hwNoise(c, n, .35, 3000, .7, .35); hwTone(c, "sawtooth", 70, 32, n + .05, .9, .25); hwWail(c, n + .1, .8, 330, 220, .12); hwFlash(); };
+    hwNoise(c, n, .35, 3000, .7, .35); hwTone(c, "sawtooth", 70, 32, n + .05, .9, .25); hwWail(c, n + .1, .8, 330, 220, .12); };
   // COMPRAR (mordidas del botón): latido + RISA DE BRUJA → rugido → ¡GRITO + susto!
   playBurgerBiteSound = function (i = 1) { const c = getAudio(); if (!c) return; const n = c.currentTime;
     hwTone(c, "triangle", 150 + i * 20, 34, n, .17, .5); hwNoise(c, n, .25, 1800, .9, .5);
     if (i === 1) { hwHeart(c, n + .05, .45); hwCackle(c, n + .1, .13); }
-    if (i === 2) { hwGrowl(c, n, .6, .4); hwPulse(); }
+    if (i === 2) { hwGrowl(c, n, .6, .4); }
     if (i >= 3) {
       hwTone(c, "sine", 55, 22, n, .9, .7); hwNoise(c, n, .8, 600, .6, .55); hwScreech(c, n + .02, .9, 900, 2400, .1); hwGrowl(c, n + .1, .9, .45);
-      hwJump("💀"); hwFlash(); } };
+      if (navigator.vibrate) navigator.vibrate([90, 40, 90, 40, 260]); } };
 }
 
 /* ── MENÚ EN VIVO ──
