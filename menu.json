@@ -7,12 +7,12 @@
   {"id":6,"cat":"premium","nombre":"Premium Malbec Doble","precio":14000,"foto":"fotos/premium-malbec-doble.jpg","disponible":true,"desc":"Pan de papa con parmesano, dos medallones, cuádruple cheddar, cebolla caramelizada al malbec y mayonesa ahumada. Incluye porción de papas fritas."},
   {"id":7,"cat":"premium","nombre":"Premium Rost Cuádruple","precio":18000,"foto":"fotos/premium-rost-cuadruple.jpg","etiqueta":"La más cargada","disponible":true,"desc":"Pan de papa con parmesano, cuatro medallones, ocho fetas de cheddar, cebolla caramelizada al malbec, bacon, pepinillos y barbacoa. Incluye porción de papas fritas.","antes":20000},
   {"id":8,"cat":"palta","nombre":"Triple Palta","precio":16000,"foto":"fotos/triple-palta.jpg","disponible":true,"desc":"Pan de papa con parmesano, tres medallones, triple queso danbo, tomate y mayonesa de palta. Incluye porción de papas fritas."},
-  {"id":21,"cat":"bebidas","nombre":"Mirinda 500 ml","precio":2500,"disponible":true},
-  {"id":22,"cat":"bebidas","nombre":"Pepsi 500 ml","precio":2500,"disponible":true},
-  {"id":23,"cat":"bebidas","nombre":"7UP 500 ml","precio":2500,"disponible":true},
-  {"id":24,"cat":"bebidas","nombre":"Paso de los Toros Pomelo 500 ml","precio":2500,"disponible":true},
-  {"id":25,"cat":"bebidas","nombre":"Mirinda 500 ml x2","precio":4000,"antes":5000,"disponible":true},
-  {"id":26,"cat":"bebidas","nombre":"Pepsi 500 ml x2","precio":4000,"antes":5000,"disponible":true},
-  {"id":27,"cat":"bebidas","nombre":"7UP 500 ml x2","precio":4000,"antes":5000,"disponible":true},
-  {"id":28,"cat":"bebidas","nombre":"Paso de los Toros Pomelo 500 ml x2","precio":4000,"antes":5000,"disponible":true}
+  {"id":21,"cat":"bebidas","nombre":"Mirinda 500 ml","precio":5000,"disponible":true},
+  {"id":22,"cat":"bebidas","nombre":"Pepsi 500 ml","precio":5000,"disponible":true},
+  {"id":23,"cat":"bebidas","nombre":"7UP 500 ml","precio":5000,"disponible":true},
+  {"id":24,"cat":"bebidas","nombre":"Paso de los Toros Pomelo 500 ml","precio":5000,"disponible":true},
+  {"id":25,"cat":"bebidas","nombre":"Mirinda 500 ml x2","precio":5000,"disponible":true},
+  {"id":26,"cat":"bebidas","nombre":"Pepsi 500 ml x2","precio":5000,"disponible":true},
+  {"id":27,"cat":"bebidas","nombre":"7UP 500 ml x2","precio":5000,"disponible":true},
+  {"id":28,"cat":"bebidas","nombre":"Paso de los Toros Pomelo 500 ml x2","precio":5000,"disponible":true}
 ]
