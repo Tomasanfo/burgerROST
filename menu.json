@@ -1,5 +1,5 @@
 [
-  {"id":1,"cat":"clasicas","nombre":"Clásica Simple","precio":11000,"foto":"fotos/clasica-simple.jpg","disponible":true,"desc":"Medallón de carne, cheddar fundido, bacon crocante, mayonesa y ketchup. Incluye porción de papas fritas."},
+  {"id":1,"cat":"clasicas","nombre":"Clásica Simple","precio":11000,"foto":"fotos/clasica-simple.jpg","disponible":true,"desc":"Medallón de carne, cheddar fundido, bacon crocante, mayonesa y ketchup. Incluye porción de papas fritas.","antes":12000},
   {"id":2,"cat":"clasicas","nombre":"Clásica Doble","precio":13000,"foto":"fotos/clasica-doble.jpg","disponible":false,"desc":"Dos medallones, doble cheddar, bacon crocante, mayonesa y ketchup. Incluye porción de papas fritas."},
   {"id":3,"cat":"clasicas","nombre":"Doble Rost BBQ","precio":14000,"foto":"fotos/doble-rost-bbq.jpg","etiqueta":"La de la casa","disponible":false,"desc":"Dos medallones, cuádruple cheddar, bacon, pepinillos y salsa barbacoa. Incluye porción de papas fritas."},
   {"id":4,"cat":"clasicas","nombre":"Clásica Triple BBQ","precio":15000,"foto":"fotos/clasica-triple-bbq.jpg","disponible":false,"desc":"Tres medallones, triple cheddar, bacon crocante, verdeo y barbacoa. Incluye porción de papas fritas."},
