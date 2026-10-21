@@ -1545,11 +1545,16 @@ let WA_NUMBER = "5492984333857";
    • Para sumar una (ej. Postres):  ["postres", "Postres", "Para cerrar bien"],
    ═══════════════════════════════════════════════════════════ */
 const CATEGORIAS = [
+  ["promos",   "Promos",   "2 hamburguesas + 2 gaseosas, a mejor precio"],
   ["clasicas", "Clásicas", "Las de siempre, bien cargadas"],
   ["premium",  "Premium",  "Pan de papa y parmesano"],
-  ["palta",    "Palta",    "Con mayonesa de palta"],
   ["bebidas",  "Bebidas",  ""]
 ];
+
+/* Categorías que se ESCONDEN por completo cuando el producto está desactivado
+   (en vez de mostrarse con el cartel "No disponible hoy"). Si todas las promos
+   están desactivadas, tampoco aparece "Promos" en el menú de arriba. */
+const OCULTAR_SI_NO_DISPONIBLE = ["promos"];
 
 /* ═══════════════════════════════════════════════════════════
    ✎ EDITÁ ACÁ ─ 3) PRODUCTOS, PRECIOS, OFERTAS Y STOCK
@@ -1575,6 +1580,18 @@ const CATEGORIAS = [
      ⚠ Respetá las comas al final de cada línea y las comillas "".
    ═══════════════════════════════════════════════════════════ */
 const PRODUCTOS_BASE = [
+  /* ── PROMOS (se muestran solo si están activadas en el panel) ── */
+  { id:31, cat:"promos", nombre:"Dúo Clásico", precio:23000, antes:27000, foto:"fotos/clasica-simple.jpg", etiqueta:"Combo", disponible:true,
+    desc:"2 Clásicas Simples + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
+  { id:32, cat:"promos", nombre:"Dúo Doble", precio:26500, antes:31000, foto:"fotos/clasica-doble.jpg", etiqueta:"Combo", disponible:true,
+    desc:"2 Clásicas Dobles + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
+  { id:33, cat:"promos", nombre:"Dúo Rost BBQ", precio:28000, antes:33000, foto:"fotos/doble-rost-bbq.jpg", etiqueta:"Combo · La de la casa", disponible:true,
+    desc:"2 Dobles Rost BBQ + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
+  { id:34, cat:"promos", nombre:"Dúo Triple BBQ", precio:29500, antes:35000, foto:"fotos/clasica-triple-bbq.jpg", etiqueta:"Combo", disponible:true,
+    desc:"2 Clásicas Triple BBQ + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
+  { id:35, cat:"promos", nombre:"Dúo Palta", precio:31500, antes:37000, foto:"fotos/triple-palta.jpg", etiqueta:"Combo", disponible:true,
+    desc:"2 Triple Palta + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
+
   /* ── CLÁSICAS ── */
   { id:1, cat:"clasicas", nombre:"Clásica Simple", precio:11000, foto:"fotos/clasica-simple.jpg", disponible:true,
     desc:"Medallón de carne, cheddar fundido, bacon crocante, mayonesa y ketchup. Incluye porción de papas fritas." },
@@ -1593,8 +1610,8 @@ const PRODUCTOS_BASE = [
   { id:7, cat:"premium", nombre:"Premium Rost Cuádruple", precio:18000, foto:"fotos/premium-rost-cuadruple.jpg", etiqueta:"La más cargada", disponible:true,
     desc:"Pan de papa con parmesano, cuatro medallones, ocho fetas de cheddar, cebolla caramelizada al malbec, bacon, pepinillos y barbacoa. Incluye porción de papas fritas." },
 
-  /* ── PALTA ── */
-  { id:8, cat:"palta", nombre:"Triple Palta", precio:16000, foto:"fotos/triple-palta.jpg", disponible:true,
+  /* (la Triple Palta vive en Premium) */
+  { id:8, cat:"premium", nombre:"Triple Palta", precio:16000, foto:"fotos/triple-palta.jpg", disponible:true,
     desc:"Pan de papa con parmesano, tres medallones, triple queso danbo, tomate y mayonesa de palta. Incluye porción de papas fritas." },
 
   /* ── BEBIDAS (sin foto) ── */
@@ -2040,12 +2057,16 @@ const drinkHTML = p => {
   </div>`;
 };
 
-$("#nav").innerHTML = CATEGORIAS.map(([k, t], idx) => `<a href="#${k}" data-nav="${k}" class="${idx === 0 ? "on" : ""}">${t}</a>`).join("");
-
 function renderCatalog() {
-  $("#app").innerHTML = CATEGORIAS.map(([k, t, s]) => {
-    const items = PRODUCTOS.filter(p => p.cat === k);
-    if (!items.length) return "";
+  // Solo categorías con algo para mostrar (las promos desactivadas desaparecen)
+  const vis = CATEGORIAS.map(([k, t, s]) => ({
+    k, t, s,
+    items: PRODUCTOS.filter(p => p.cat === k && !(OCULTAR_SI_NO_DISPONIBLE.includes(k) && p.disponible === false))
+  })).filter(c => c.items.length);
+
+  $("#nav").innerHTML = vis.map((c, i) => `<a href="#${c.k}" data-nav="${c.k}" class="${i === 0 ? "on" : ""}">${c.t}</a>`).join("");
+
+  $("#app").innerHTML = vis.map(({ k, t, s, items }) => {
     const body = items.some(p => p.foto)
       ? items.map(p => p.foto ? burgerHTML(p) : drinkHTML(p)).join("")
       : `<div class="drinks">${items.map(drinkHTML).join("")}</div>`;

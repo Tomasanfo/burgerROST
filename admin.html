@@ -28,6 +28,7 @@ button:disabled{opacity:.45}
 .pct.on{visibility:visible}
 .row.off{opacity:.55}
 .row.off .top b::after{content:" · NO DISPONIBLE";color:var(--rd);font-size:11px}
+.row.promo.off .top b::after{content:" · OCULTA"}
 .row.dirty{border-color:var(--or)}
 .sw{position:relative;width:50px;height:28px;flex:none;margin:0}
 .sw input{opacity:0;position:absolute;inset:0;width:100%;height:100%;margin:0;z-index:1;cursor:pointer}
@@ -74,7 +75,7 @@ ol b{color:var(--tx)}
 
   <!-- PANEL -->
   <div id="panel" class="hide">
-    <p class="s">Tocá el interruptor para marcar <b>no disponible</b>. Para una <b>oferta</b>, poné el precio nuevo en "Precio hoy" y el viejo en "Antes". Después tocá <b>Publicar</b>.</p>
+    <p class="s">Tocá el interruptor para marcar <b>no disponible</b>. En <b>Promociones</b> el interruptor las <b>muestra u oculta</b> en la página. Para una <b>oferta</b>, poné el precio nuevo en "Precio hoy" y el viejo en "Antes". Después tocá <b>Publicar</b>.</p>
     <div id="list"></div>
     <div style="margin-top:18px"><button class="g" id="out">Cerrar sesión en este dispositivo</button></div>
   </div>
@@ -122,11 +123,13 @@ async function load() {
   }
 }
 
+const LABEL = { promos: "Promociones (activá o ocultá)" };
+
 function render() {
   const cats = [...new Set(data.map(p => p.cat))];
   $("#list").innerHTML = cats.map(c =>
-    `<h2>${c}</h2>` + data.filter(p => p.cat === c).map(p => `
-    <div class="card row" data-id="${p.id}">
+    `<h2>${LABEL[c] || c}</h2>` + data.filter(p => p.cat === c).map(p => `
+    <div class="card row${p.cat === "promos" ? " promo" : ""}" data-id="${p.id}">
       <div class="top"><b>${p.nombre}</b>
         <label class="sw"><input type="checkbox" data-f="disponible" ${p.disponible !== false ? "checked" : ""}><span></span></label></div>
       <div class="nums">
