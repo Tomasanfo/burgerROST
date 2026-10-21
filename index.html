@@ -1551,10 +1551,11 @@ const CATEGORIAS = [
   ["bebidas",  "Bebidas",  ""]
 ];
 
-/* Categorías que se ESCONDEN por completo cuando el producto está desactivado
-   (en vez de mostrarse con el cartel "No disponible hoy"). Si todas las promos
-   están desactivadas, tampoco aparece "Promos" en el menú de arriba. */
-const OCULTAR_SI_NO_DISPONIBLE = ["promos"];
+/* ¿Se esconde el producto por completo? (lo maneja el panel con el interruptor "Visible")
+   oculto:true  → no aparece en la página (si una categoría queda vacía, tampoco su pestaña)
+   disponible:false → SÍ aparece, pero gris con el cartel "No disponible hoy" (agotado)
+   Compatibilidad: una promo con disponible:false también se esconde. */
+const estaOculto = p => p.oculto === true || (p.cat === "promos" && p.disponible === false);
 
 /* ═══════════════════════════════════════════════════════════
    ✎ EDITÁ ACÁ ─ 3) PRODUCTOS, PRECIOS, OFERTAS Y STOCK
@@ -1571,6 +1572,7 @@ const OCULTAR_SI_NO_DISPONIBLE = ["promos"];
      foto ...... nombre del archivo en fotos/  (las bebidas no llevan)
      etiqueta .. (opcional) cartelito naranja, ej. "La de la casa"
      disponible  true = se puede pedir · false = "Agotada" (gris, sin botón)
+     oculto .... (opcional) true = NO se muestra en la página (lo pone el panel)
 
    RECETAS RÁPIDAS
      Cambiar precio ......... precio:14000  →  precio:15000
@@ -2061,7 +2063,7 @@ function renderCatalog() {
   // Solo categorías con algo para mostrar (las promos desactivadas desaparecen)
   const vis = CATEGORIAS.map(([k, t, s]) => ({
     k, t, s,
-    items: PRODUCTOS.filter(p => p.cat === k && !(OCULTAR_SI_NO_DISPONIBLE.includes(k) && p.disponible === false))
+    items: PRODUCTOS.filter(p => p.cat === k && !estaOculto(p))
   })).filter(c => c.items.length);
 
   $("#nav").innerHTML = vis.map((c, i) => `<a href="#${c.k}" data-nav="${c.k}" class="${i === 0 ? "on" : ""}">${c.t}</a>`).join("");
@@ -2076,7 +2078,7 @@ function renderCatalog() {
   // Limpiar del carrito si algún producto pasó a no disponible
   Object.keys(cart).forEach(id => {
     const prod = find(id);
-    if (!prod || prod.disponible === false) delete cart[id];
+    if (!prod || prod.disponible === false || estaOculto(prod)) delete cart[id];
   });
 
   observeSections();

@@ -27,10 +27,13 @@ button:disabled{opacity:.45}
 .pct{min-width:54px;text-align:center;font-weight:800;color:var(--gr);padding-bottom:11px;visibility:hidden}
 .pct.on{visibility:visible}
 .row.off{opacity:.55}
-.row.off .top b::after{content:" · NO DISPONIBLE";color:var(--rd);font-size:11px}
-.row.promo.off .top b::after{content:" · OCULTA"}
+.row.off .top b::after{content:" · AGOTADO";color:var(--rd);font-size:11px}
+.row.hid .top b::after{content:" · OCULTO";color:var(--mut);font-size:11px}
+.row.hid{opacity:.4}
+.sws{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}
+.sl{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;color:var(--tx)}
 .row.dirty{border-color:var(--or)}
-.sw{position:relative;width:50px;height:28px;flex:none;margin:0}
+.sw{position:relative;display:block;width:50px;height:28px;flex:none;margin:0}
 .sw input{opacity:0;position:absolute;inset:0;width:100%;height:100%;margin:0;z-index:1;cursor:pointer}
 .sw span{position:absolute;inset:0;background:#3a3a3a;border-radius:99px;transition:.2s}
 .sw span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
@@ -75,7 +78,7 @@ ol b{color:var(--tx)}
 
   <!-- PANEL -->
   <div id="panel" class="hide">
-    <p class="s">Tocá el interruptor para marcar <b>no disponible</b>. En <b>Promociones</b> el interruptor las <b>muestra u oculta</b> en la página. Para una <b>oferta</b>, poné el precio nuevo en "Precio hoy" y el viejo en "Antes". Después tocá <b>Publicar</b>.</p>
+    <p class="s"><b>Visible</b> apagado = el producto <b>no se muestra</b> en la página. <b>Hay stock</b> apagado = se muestra gris como <b>agotado</b> y no se puede pedir (las promos solo tienen "Visible"). Para una <b>oferta</b>, poné el precio nuevo en "Precio hoy" y el viejo en "Antes". Después tocá <b>Publicar</b>.</p>
     <div id="list"></div>
     <div style="margin-top:18px"><button class="g" id="out">Cerrar sesión en este dispositivo</button></div>
   </div>
@@ -115,7 +118,9 @@ async function load() {
     if (r.status === 404) throw new Error("No encuentro menu.json en ese repositorio (o el token no tiene acceso).");
     if (!r.ok) throw new Error("GitHub respondió " + r.status);
     const j = await r.json();
-    sha = j.sha; data = JSON.parse(b64dec(j.content)); orig = JSON.stringify(data);
+    sha = j.sha; data = JSON.parse(b64dec(j.content));
+    data.forEach(p => { if (p.cat === "promos" && p.disponible === false) { p.oculto = true; p.disponible = true; } });
+    orig = JSON.stringify(data);
     render(); $("#panel").classList.remove("hide");
   } catch (e) {
     say(e.message || "No se pudo cargar", false);
@@ -123,15 +128,18 @@ async function load() {
   }
 }
 
-const LABEL = { promos: "Promociones (activá o ocultá)" };
+const LABEL = { promos: "Promociones" };
 
 function render() {
   const cats = [...new Set(data.map(p => p.cat))];
   $("#list").innerHTML = cats.map(c =>
     `<h2>${LABEL[c] || c}</h2>` + data.filter(p => p.cat === c).map(p => `
-    <div class="card row${p.cat === "promos" ? " promo" : ""}" data-id="${p.id}">
-      <div class="top"><b>${p.nombre}</b>
-        <label class="sw"><input type="checkbox" data-f="disponible" ${p.disponible !== false ? "checked" : ""}><span></span></label></div>
+    <div class="card row" data-id="${p.id}">
+      <div class="top"><b>${p.nombre}</b></div>
+      <div class="sws">
+        <label class="sl"><span class="sw"><input type="checkbox" data-f="visible" ${p.oculto ? "" : "checked"}><span></span></span>Visible</label>
+        ${p.cat === "promos" ? "" : `<label class="sl"><span class="sw"><input type="checkbox" data-f="disponible" ${p.disponible !== false ? "checked" : ""}><span></span></span>Hay stock</label>`}
+      </div>
       <div class="nums">
         <label>Precio hoy<input type="number" inputmode="numeric" data-f="precio" value="${p.precio ?? ""}"></label>
         <label>Antes (oferta)<input type="number" inputmode="numeric" data-f="antes" placeholder="sin oferta" value="${p.antes ?? ""}"></label>
@@ -145,6 +153,7 @@ function render() {
 function paint(p) {
   const row = document.querySelector(`.row[data-id="${p.id}"]`); if (!row) return;
   row.classList.toggle("off", p.disponible === false);
+  row.classList.toggle("hid", !!p.oculto);
   const pct = row.querySelector(".pct");
   const on = p.antes && p.antes > p.precio;
   pct.classList.toggle("on", !!on);
@@ -165,6 +174,7 @@ function onEdit(e) {
   const f = e.target.dataset.f; if (!f) return;
   const p = data.find(x => x.id == e.target.closest(".row").dataset.id);
   if (f === "disponible") p.disponible = e.target.checked;
+  else if (f === "visible") { if (e.target.checked) delete p.oculto; else p.oculto = true; }
   else {
     const v = e.target.value.trim();
     if (v === "") { if (f === "antes") delete p.antes; }
