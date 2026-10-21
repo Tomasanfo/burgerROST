@@ -1328,14 +1328,14 @@ button:focus-visible, a:focus-visible {
 }
 
 /* ═══ 🎃 TEMA HALLOWEEN (se activa con HALLOWEEN = true en el script) ═══ */
-body.halloween { --or:#ff8a1f; --or-glow:#ff5a00; --gr:#a6ff3c; --line:#2b1f3d; --card:#120d1c; --card-hover:#181026;
-  background: radial-gradient(ellipse at 50% -10%, rgba(125,55,210,.38), transparent 60%), radial-gradient(ellipse at 100% 100%, rgba(255,106,0,.14), transparent 50%), #07040d fixed; }
+body.halloween { --or:#ff8a1f; --or-glow:#ff5a00; --gr:#a6ff3c; --line:#2a1414; --card:#0e0909; --card-hover:#150c0c;
+  background: radial-gradient(ellipse at 50% -10%, rgba(120,0,0,.38), transparent 60%), radial-gradient(ellipse at 100% 100%, rgba(255,70,0,.07), transparent 50%), #030202 fixed; }
 .halloween .sh h2::before { content: "🎃 "; }
 .halloween .sh h2::after { content: " 🕷️"; }
-.halloween .rost-logo-stage { filter: drop-shadow(0 0 24px rgba(155,92,255,.5)); }
-.halloween .burger, .halloween .drink { border-color: rgba(155,92,255,.28); }
+.halloween .rost-logo-stage { filter: drop-shadow(0 0 24px rgba(170,18,18,.5)); }
+.halloween .burger, .halloween .drink { border-color: rgba(170,18,18,.28); }
 #hwDecor { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
-.hw-fog { position: absolute; left: -20%; right: -20%; bottom: 0; height: 38%; background: radial-gradient(ellipse at 50% 100%, rgba(155,92,255,.26), transparent 70%); animation: hwFog 9s ease-in-out infinite alternate; }
+.hw-fog { position: absolute; left: -20%; right: -20%; bottom: 0; height: 38%; background: radial-gradient(ellipse at 50% 100%, rgba(170,18,18,.26), transparent 70%); animation: hwFog 9s ease-in-out infinite alternate; }
 @keyframes hwFog { from { transform: translateX(-4%); opacity: .6; } to { transform: translateX(4%); opacity: 1; } }
 .hw-bat { position: absolute; left: 0; font-size: 22px; opacity: .85; animation: hwFly linear infinite; }
 @keyframes hwFly { 0% { transform: translate(-12vw,0) scaleX(1); } 25% { transform: translate(22vw,-26px); } 50% { transform: translate(55vw,14px); } 75% { transform: translate(85vw,-22px); } 100% { transform: translate(115vw,0); } }
@@ -1344,10 +1344,10 @@ body.halloween { --or:#ff8a1f; --or-glow:#ff5a00; --gr:#a6ff3c; --line:#2b1f3d; 
 @keyframes hwGhost { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-14px) rotate(6deg); } }
 .hw-flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 60; }
 .hw-ribbon { animation: hwShake 3.5s infinite; margin: 12px auto 0; padding: 9px 14px; border-radius: 14px; text-align: center; font-weight: 800; font-size: 14px; color: #fff;
-  background: linear-gradient(90deg, rgba(155,92,255,.25), rgba(255,138,31,.25)); border: 1.5px solid rgba(155,92,255,.6); box-shadow: 0 0 18px rgba(155,92,255,.35); }
+  background: linear-gradient(90deg, rgba(170,18,18,.25), rgba(255,138,31,.25)); border: 1.5px solid rgba(170,18,18,.6); box-shadow: 0 0 18px rgba(170,18,18,.35); }
 
 /* ── MÁS TERROR: viñeta, sangre, luces que fallan, ojos, susto ── */
-.hw-vig { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.72) 100%); }
+.hw-vig { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 32%, rgba(0,0,0,.9) 100%); }
 .hw-dark { position: absolute; inset: 0; background: #000; opacity: 0; animation: hwDark 9s infinite; }
 @keyframes hwDark { 0%,87%,100% { opacity: 0; } 88% { opacity: .65; } 89% { opacity: .05; } 90% { opacity: .75; } 92% { opacity: .1; } 93% { opacity: 0; } }
 .hw-blood { position: absolute; top: 0; left: 0; right: 0; height: 46px; transform-origin: top; animation: hwDrip 7s ease-in-out infinite alternate;
@@ -2510,6 +2510,21 @@ if (HALLOWEEN) {
   setInterval(() => { if (document.hidden) return; const e = document.createElement("span"); e.className = "hw-eyes";
     e.style.left = (6 + Math.random() * 82) + "%"; e.style.top = (14 + Math.random() * 70) + "%"; deco.appendChild(e); setTimeout(() => e.remove(), 3300); }, 7000);
 
+  // RISA DE BRUJA: "je-je-je-je… jiiiiii" (voz aguda áspera filtrada + aire)
+  const hwCackle = (c, t, v) => {
+    const fl = c.createBiquadFilter(); fl.type = "bandpass"; fl.frequency.value = 1150; fl.Q.value = 2.2; fl.connect(c.destination);
+    [[0, .13, 430, 740], [.16, .13, 470, 800], [.31, .14, 510, 860], [.47, .15, 550, 920]].forEach(([dt, d, f0, f1]) => {
+      const o = c.createOscillator(), g = c.createGain(); o.type = "sawtooth";
+      o.frequency.setValueAtTime(f0, t + dt); o.frequency.exponentialRampToValueAtTime(f1, t + dt + d * .6); o.frequency.exponentialRampToValueAtTime(f0 * .9, t + dt + d);
+      g.gain.setValueAtTime(.0001, t + dt); g.gain.linearRampToValueAtTime(v, t + dt + .03); g.gain.exponentialRampToValueAtTime(.001, t + dt + d);
+      o.connect(g); g.connect(fl); o.start(t + dt); o.stop(t + dt + d + .02);
+      hwNoise(c, t + dt, d, 2600, 2, v * .6); });
+    const o = c.createOscillator(), l = c.createOscillator(), lg = c.createGain(), g = c.createGain(); o.type = "sawtooth";
+    o.frequency.setValueAtTime(600, t + .64); o.frequency.exponentialRampToValueAtTime(1000, t + .9); o.frequency.exponentialRampToValueAtTime(380, t + 1.35);
+    l.frequency.value = 11; lg.gain.value = 45; l.connect(lg); lg.connect(o.frequency);
+    g.gain.setValueAtTime(.0001, t + .64); g.gain.linearRampToValueAtTime(v * 1.1, t + .8); g.gain.exponentialRampToValueAtTime(.001, t + 1.35);
+    o.connect(g); g.connect(fl); o.start(t + .64); l.start(t + .64); o.stop(t + 1.37); l.stop(t + 1.37); };
+
   // SUMAR AL CARRITO: golpe de graves + un susto al azar (4 variantes), más pulso rojo
   playAddSound = function () { const c = getAudio(); if (!c) return; const n = c.currentTime;
     hwTone(c, "sine", 70, 28, n, .35, .45); hwPulse();
@@ -2524,14 +2539,13 @@ if (HALLOWEEN) {
   // tocar el logo: rayo + trueno + aullido de fantasma
   playNeonSparkSound = function () { const c = getAudio(); if (!c) return; const n = c.currentTime;
     hwNoise(c, n, .35, 3000, .7, .35); hwTone(c, "sawtooth", 70, 32, n + .05, .9, .25); hwWail(c, n + .1, .8, 330, 220, .12); hwFlash(); };
-  // COMPRAR (mordidas del botón): latido → rugido → ¡GRITO + susto + risa!
+  // COMPRAR (mordidas del botón): latido + RISA DE BRUJA → rugido → ¡GRITO + susto!
   playBurgerBiteSound = function (i = 1) { const c = getAudio(); if (!c) return; const n = c.currentTime;
     hwTone(c, "triangle", 150 + i * 20, 34, n, .17, .5); hwNoise(c, n, .25, 1800, .9, .5);
-    if (i === 1) hwHeart(c, n + .05, .55);
+    if (i === 1) { hwHeart(c, n + .05, .45); hwCackle(c, n + .1, .13); }
     if (i === 2) { hwGrowl(c, n, .6, .4); hwPulse(); }
     if (i >= 3) {
       hwTone(c, "sine", 55, 22, n, .9, .7); hwNoise(c, n, .8, 600, .6, .55); hwScreech(c, n + .02, .9, 900, 2400, .1); hwGrowl(c, n + .1, .9, .45);
-      [0, 1, 2, 3, 4].forEach(k => hwTone(c, "sawtooth", 300 - k * 25, 140 - k * 12, n + .55 + k * .15, .12, .12));
       hwJump("💀"); hwFlash(); } };
 }
 
