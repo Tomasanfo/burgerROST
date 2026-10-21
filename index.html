@@ -38,8 +38,9 @@
    logo-rost-removebg-preview.png      ← logo con fondo transparente
    fotos/                              ← fotos de las hamburguesas + copia del logo
 
- ESTA PÁGINA NO USA BASE DE DATOS NI PANEL. Es una página "estática":
- los precios y productos se cambian editando este archivo. Los pedidos
+ Los precios, ofertas y stock se leen de  menu.json  y se cambian desde  admin.html
+ (o editando menu.json a mano). PRODUCTOS_BASE de abajo queda solo como respaldo.
+ Es una página "estática": Los pedidos
  salen por WhatsApp.
 
  ── QUÉ SE EDITA Y DÓNDE (buscá el cartel "✎ EDITÁ ACÁ" con Ctrl+F) ──
@@ -2366,7 +2367,20 @@ if (heroEl && "IntersectionObserver" in window) {
   new IntersectionObserver(es => heroEl.classList.toggle("offscreen", !es[0].isIntersecting)).observe(heroEl);
 }
 
-renderCatalog();
+/* ── MENÚ EN VIVO ──
+   Los precios / ofertas / stock se leen de menu.json (lo edita admin.html).
+   Si menu.json no carga (sin internet, etc.) se usa la lista PRODUCTOS_BASE de arriba como respaldo. */
+(async () => {
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 4000);
+    const r = await fetch("menu.json?v=" + Date.now(), { signal: ctl.signal, cache: "no-store" });
+    clearTimeout(t);
+    const d = r.ok ? await r.json() : null;
+    if (Array.isArray(d) && d.length) PRODUCTOS = d.map(p => ({ ...p }));
+  } catch (e) { /* se queda con PRODUCTOS_BASE */ }
+  renderCatalog();
+})();
 </script>
 </body>
 </html>
