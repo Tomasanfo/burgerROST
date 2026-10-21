@@ -1068,6 +1068,9 @@ footer {
   display: none;
   animation: fadeSlideDown 0.25s ease forwards;
 }
+.envio-nota { margin: 10px 0 10px; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4;
+  background: rgba(255,167,38,.1); border: 1px solid rgba(255,167,38,.45); color: #ffe2b0; }
+.envio-nota b { color: #fff; }
 .address-wrap.show {
   display: block;
 }
@@ -1484,6 +1487,7 @@ window.resolveRealPhoto = function(img) {
 
       <!-- Campo de dirección que se despliega cuando eligen Envío -->
       <div class="address-wrap" id="addressWrap">
+        <div class="envio-nota" id="envioNota">🛵 <b>El envío se cobra aparte.</b> <span id="envioRango"></span></div>
         <input
           type="text"
           class="field-input"
@@ -1493,13 +1497,14 @@ window.resolveRealPhoto = function(img) {
         >
       </div>
 
-      <!-- Nombre opcional para identificar el pedido -->
+      <!-- Nombre OBLIGATORIO para identificar el pedido -->
       <input
         type="text"
         class="field-input"
         id="clientNameInput"
-        placeholder="👤 Tu nombre (opcional)"
+        placeholder="👤 Tu nombre"
         autocomplete="name"
+        required
       >
     </div>
 
@@ -2249,6 +2254,19 @@ $("#send").onclick = () => {
   const clientVal = $("#clientNameInput").value.trim();
   const noteVal = $("#note").value.trim();
 
+  // Validar nombre obligatorio
+  if (!clientVal) {
+    const nameInput = $("#clientNameInput");
+    nameInput.classList.remove("error-shake");
+    void nameInput.offsetWidth;
+    nameInput.classList.add("error-shake");
+    nameInput.focus();
+    playSoftTick(160);
+    showToast("👤 ¡Falta tu nombre para tomar el pedido!");
+    if (navigator.vibrate) navigator.vibrate([40, 40, 40]);
+    return;
+  }
+
   // Validar dirección obligatoria si eligió Envío a domicilio
   if (deliveryMode === "envio" && !addressVal) {
     const addrInput = $("#addressInput");
@@ -2415,9 +2433,18 @@ if (heroEl && "IntersectionObserver" in window) {
    Los precios / ofertas / stock se leen de menu.json y el estado abierto/cerrado de config.json
    (los dos se editan desde admin.html). Si menu.json no carga (sin internet, etc.) se usa
    PRODUCTOS_BASE de arriba como respaldo; si config.json no carga, se asume ABIERTO. */
+let ENVIO = { min: 0, max: 0 };   // rango de costo de envío (se edita en el panel → config.json)
+function pintarEnvio() {
+  const el = $("#envioRango"); if (!el) return;
+  const a = ENVIO.min, b = ENVIO.max;
+  el.textContent = (a && b && b > a) ? `Entre ${money(a)} y ${money(b)}, según la zona.`
+    : (a || b) ? `Aproximadamente ${money(a || b)}.` : "";
+}
 function aplicarEstado(c) {
   CERRADO = !!(c && c.cerrado);
   document.body.classList.toggle("cerrado", CERRADO);
+  ENVIO = { min: Math.max(0, Number(c && c.envioMin) || 0), max: Math.max(0, Number(c && c.envioMax) || 0) };
+  pintarEnvio();
 }
 async function leerJSON(url) {
   const ctl = new AbortController();
@@ -2430,7 +2457,10 @@ async function leerJSON(url) {
 // Si el local abre/cierra mientras alguien tiene la página abierta, se entera solo
 async function revisarEstado() {
   const c = await leerJSON("config.json");
-  if (c && !!c.cerrado !== CERRADO) { aplicarEstado(c); renderCatalog(); }
+  if (!c) return;
+  const cambio = !!c.cerrado !== CERRADO;
+  aplicarEstado(c);
+  if (cambio) renderCatalog();
 }
 (async () => {
   const [d, c] = await Promise.all([leerJSON("menu.json"), leerJSON("config.json")]);
