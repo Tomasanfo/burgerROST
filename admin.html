@@ -31,6 +31,10 @@ button:disabled{opacity:.45}
 .row.hid .top b::after{content:" · OCULTO";color:var(--mut);font-size:11px}
 .row.hid{opacity:.4}
 .sws{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}
+.sw.red input:checked+span{background:var(--rd)}
+.status{border-color:#3a3a3a}
+.status.closed{border-color:var(--rd);background:#1d1111}
+.status b{font-size:16px}
 .sl{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;color:var(--tx)}
 .row.dirty{border-color:var(--or)}
 .sw{position:relative;display:block;width:50px;height:28px;flex:none;margin:0}
@@ -78,6 +82,10 @@ ol b{color:var(--tx)}
 
   <!-- PANEL -->
   <div id="panel" class="hide">
+    <div class="card status" id="statusCard">
+      <label class="sl"><span class="sw red"><input type="checkbox" id="zzz"><span></span></span><b id="zzzTxt">…</b></label>
+      <p class="s" id="zzzSub" style="margin:8px 0 0"></p>
+    </div>
     <p class="s"><b>Visible</b> apagado = el producto <b>no se muestra</b> en la página. <b>Hay stock</b> apagado = se muestra gris como <b>agotado</b> y no se puede pedir (las promos solo tienen "Visible"). Para una <b>oferta</b>, poné el precio nuevo en "Precio hoy" y el viejo en "Antes". Después tocá <b>Publicar</b>.</p>
     <div id="list"></div>
     <div style="margin-top:18px"><button class="g" id="out">Cerrar sesión en este dispositivo</button></div>
@@ -97,6 +105,7 @@ const serialize = d => "[\n" + d.map(p => "  " + JSON.stringify(p)).join(",\n") 
 
 let repo = LS("rost_repo"), token = LS("rost_tok");
 let data = [], orig = "", sha = "";
+let cfg = { cerrado: false }, cfgSha = "";
 let msgT;
 
 function say(t, ok = true) {
@@ -122,6 +131,7 @@ async function load() {
     data.forEach(p => { if (p.cat === "promos" && p.disponible === false) { p.oculto = true; p.disponible = true; } });
     orig = JSON.stringify(data);
     render(); $("#panel").classList.remove("hide");
+    loadCfg();
   } catch (e) {
     say(e.message || "No se pudo cargar", false);
     $("#repo").value = repo; $("#login").classList.remove("hide");
@@ -129,6 +139,36 @@ async function load() {
 }
 
 const LABEL = { promos: "Promociones" };
+
+/* ── ESTADO DEL LOCAL (abierto / zzz cerrado) · se guarda aparte en config.json y se publica al instante ── */
+function paintCfg() {
+  $("#zzz").checked = !!cfg.cerrado;
+  $("#zzzTxt").textContent = cfg.cerrado ? "😴 Zzz · CERRADO" : "🟢 ABIERTO";
+  $("#zzzSub").textContent = cfg.cerrado ? "La página se ve, pero nadie puede hacer pedidos. Apagá el interruptor para abrir." : "Tomando pedidos. Prendé el interruptor (zzz) cuando cierres.";
+  $("#statusCard").classList.toggle("closed", !!cfg.cerrado);
+}
+async function loadCfg() {
+  try {
+    const r = await api("config.json?t=" + Date.now());
+    if (r.ok) { const j = await r.json(); cfgSha = j.sha; cfg = JSON.parse(b64dec(j.content)); }
+    else { cfg = { cerrado: false }; cfgSha = ""; } // todavía no existe: se crea al primer cambio
+  } catch (e) {}
+  paintCfg();
+}
+$("#zzz").addEventListener("change", async e => {
+  const want = e.target.checked, box = e.target;
+  box.disabled = true;
+  try {
+    const r = await api("config.json", {
+      method: "PUT",
+      body: JSON.stringify({ message: want ? "Local: CERRADO (zzz)" : "Local: ABIERTO", content: b64enc(JSON.stringify({ cerrado: want }) + "\n"), sha: cfgSha || undefined })
+    });
+    if (!r.ok) throw new Error(r.status === 409 || r.status === 422 ? "Se cambió desde otro lado. Recargá la página." : "No se pudo guardar (" + r.status + ").");
+    cfgSha = (await r.json()).content.sha; cfg = { cerrado: want };
+    say(want ? "Local CERRADO 😴 En 1–2 minutos la página deja de tomar pedidos." : "Local ABIERTO 🟢 En 1–2 minutos ya se puede pedir.");
+  } catch (err) { say(err.message, false); }
+  paintCfg(); box.disabled = false;
+});
 
 function render() {
   const cats = [...new Set(data.map(p => p.cat))];

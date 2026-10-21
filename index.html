@@ -815,6 +815,16 @@ footer {
   display: block;
 }
 /* ───────── BARRA DEL PEDIDO (abajo) ───────── */
+/* ── LOCAL CERRADO (zzz) ── lo activa el panel con config.json */
+.closed-banner { display: none; margin: 14px auto 0; padding: 14px 16px; border-radius: 16px; text-align: center;
+  background: rgba(255,167,38,.12); border: 1.5px solid var(--or); color: #fff; }
+.closed-banner b { display: block; font-size: 18px; color: var(--or); margin-bottom: 2px; }
+.closed-banner small { font-size: 14px; opacity: .85; }
+.closed-banner .z { display: inline-block; animation: zzFloat 2.2s ease-in-out infinite; }
+@keyframes zzFloat { 0%,100% { transform: translateY(0); opacity: .6; } 50% { transform: translateY(-4px); opacity: 1; } }
+.cerrado .closed-banner { display: block; }
+.cerrado .cartbar { display: none !important; }
+
 .cartbar {
   position: fixed;
   left: 12px;
@@ -1422,6 +1432,8 @@ window.resolveRealPhoto = function(img) {
   </div>
 </header>
 
+<div class="closed-banner wrap" id="closedBanner" role="status"><b>😴 <span class="z">Z</span>zz… Estamos descansando</b><small>Por ahora no estamos tomando pedidos. ¡Volvé en un ratito!</small></div>
+
 <nav aria-label="Categorías del menú"><div class="wrap" id="nav"></div></nav>
 
 <!-- Las secciones y productos se generan solos desde las listas del <script> -->
@@ -1633,6 +1645,7 @@ const PRODUCTOS_BASE = [
    cart : el carrito { idProducto: cantidad }. $ y money son atajos. */
 let PRODUCTOS = PRODUCTOS_BASE.map(p => ({ ...p }));
 let deliveryMode = "retiro"; // "retiro" | "envio"
+let CERRADO = false;        // true = local cerrado (zzz): se ve el menú pero no se pide. Lo maneja config.json
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
@@ -2003,6 +2016,7 @@ document.querySelectorAll(".chip").forEach(ch => {
    RENDERIZADO DE LA CARTA (CON FOTOS 100% REALES, OFERTAS Y STOCK)
    ═══════════════════════════════════════════════════════════ */
 const controls = p => {
+  if (CERRADO) return `<button class="add" disabled aria-label="Cerrado por ahora">${p.foto ? "Cerrado" : "Zzz"}</button>`;
   if (p.disponible === false) {
     return `<button class="add" disabled aria-label="${p.nombre} agotada">${p.foto ? "Agotada" : "Sin stock"}</button>`;
   }
@@ -2081,6 +2095,8 @@ function renderCatalog() {
     if (!prod || prod.disponible === false || estaOculto(prod)) delete cart[id];
   });
 
+  if (CERRADO) Object.keys(cart).forEach(id => delete cart[id]); // cerrado: no queda nada armado
+
   observeSections();
   draw();
 }
@@ -2137,6 +2153,7 @@ function draw(animatedId = null) {
 /* ── AGREGAR AL CARRITO CON ANIMACIÓN: suma 1, suena, saltan emojis y rebota la tarjeta ── */
 function addItemWithJuice(id, clientX, clientY) {
   const prod = find(id);
+  if (CERRADO) { showToast("Estamos cerrados por ahora 😴"); return; }
   if (!prod || prod.disponible === false) return;
 
   cart[id] = (cart[id] || 0) + 1;
@@ -2220,6 +2237,7 @@ $("#sheet").onclick = e => { if (e.target.id === "sheet") closeSheet(); };
 let isEatingButton = false;
 
 $("#send").onclick = () => {
+  if (CERRADO) { showToast("Estamos cerrados por ahora 😴"); return; }
   if (isEatingButton) return;
   const { ids, t } = draw();
   if (!ids.length) return;
@@ -2391,18 +2409,33 @@ if (heroEl && "IntersectionObserver" in window) {
 }
 
 /* ── MENÚ EN VIVO ──
-   Los precios / ofertas / stock se leen de menu.json (lo edita admin.html).
-   Si menu.json no carga (sin internet, etc.) se usa la lista PRODUCTOS_BASE de arriba como respaldo. */
-(async () => {
+   Los precios / ofertas / stock se leen de menu.json y el estado abierto/cerrado de config.json
+   (los dos se editan desde admin.html). Si menu.json no carga (sin internet, etc.) se usa
+   PRODUCTOS_BASE de arriba como respaldo; si config.json no carga, se asume ABIERTO. */
+function aplicarEstado(c) {
+  CERRADO = !!(c && c.cerrado);
+  document.body.classList.toggle("cerrado", CERRADO);
+}
+async function leerJSON(url) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 4000);
   try {
-    const ctl = new AbortController();
-    const t = setTimeout(() => ctl.abort(), 4000);
-    const r = await fetch("menu.json?v=" + Date.now(), { signal: ctl.signal, cache: "no-store" });
-    clearTimeout(t);
-    const d = r.ok ? await r.json() : null;
-    if (Array.isArray(d) && d.length) PRODUCTOS = d.map(p => ({ ...p }));
-  } catch (e) { /* se queda con PRODUCTOS_BASE */ }
+    const r = await fetch(url + "?v=" + Date.now(), { signal: ctl.signal, cache: "no-store" });
+    return r.ok ? await r.json() : null;
+  } catch (e) { return null; } finally { clearTimeout(t); }
+}
+// Si el local abre/cierra mientras alguien tiene la página abierta, se entera solo
+async function revisarEstado() {
+  const c = await leerJSON("config.json");
+  if (c && !!c.cerrado !== CERRADO) { aplicarEstado(c); renderCatalog(); }
+}
+(async () => {
+  const [d, c] = await Promise.all([leerJSON("menu.json"), leerJSON("config.json")]);
+  if (Array.isArray(d) && d.length) PRODUCTOS = d.map(p => ({ ...p }));
+  aplicarEstado(c);
   renderCatalog();
+  setInterval(revisarEstado, 120000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) revisarEstado(); });
 })();
 </script>
 </body>
