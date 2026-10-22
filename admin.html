@@ -38,7 +38,12 @@ button:disabled{opacity:.45}
 .sl{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;color:var(--tx)}
 .row.dirty{border-color:var(--or)}
 .mv{display:flex;gap:6px}
-.mv button{padding:6px 12px;font-size:16px;line-height:1;background:#262626;color:var(--or);border-radius:10px}
+.mv{gap:10px}
+.mv button{padding:10px 18px;font-size:18px;line-height:1;background:#262626;color:var(--or);border-radius:12px;min-width:52px;touch-action:manipulation}
+.mv button:active:not(:disabled){transform:scale(.9)}
+.row{position:relative}
+.row.moved{z-index:2;animation:movedGlow 1s ease-out}
+@keyframes movedGlow{0%{box-shadow:0 0 0 2px var(--or),0 0 22px rgba(255,152,0,.7);transform:scale(1.02)}100%{box-shadow:0 0 0 0 transparent;transform:none}}
 .mv button:disabled{opacity:.2}
 .sw{position:relative;display:block;width:50px;height:28px;flex:none;margin:0}
 .sw input{opacity:0;position:absolute;inset:0;width:100%;height:100%;margin:0;z-index:1;cursor:pointer}
@@ -157,11 +162,23 @@ const LABEL = { promos: "Promociones" };
 const sameCat = p => data.filter(x => x.cat === p.cat);
 const isFirst = p => sameCat(p)[0] === p;
 const isLast = p => { const l = sameCat(p); return l[l.length - 1] === p; };
+const rowEl = id => document.querySelector(`.row[data-id="${id}"]`);
 function move(p, dir) {
   const l = sameCat(p), i = l.indexOf(p), o = l[i + dir]; if (!o) return;
+  const a0 = rowEl(p.id)?.getBoundingClientRect(), b0 = rowEl(o.id)?.getBoundingClientRect();
   const ia = data.indexOf(p), ib = data.indexOf(o);
   data[ia] = o; data[ib] = p;
   render();
+  const A = rowEl(p.id), B = rowEl(o.id); if (!A || !B) return;
+  // la tarjeta movida se queda en el mismo lugar de la pantalla (bajo tu dedo)
+  if (a0) { const dy = A.getBoundingClientRect().top - a0.top; if (dy) window.scrollBy({ top: dy, behavior: "instant" }); }
+  // la vecina se desliza suave a su nuevo lugar
+  if (b0 && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const dy = b0.top - B.getBoundingClientRect().top;
+    if (dy) B.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: 280, easing: "cubic-bezier(.2,.8,.2,1)" });
+  }
+  // la movida brilla un instante para que sepas cuál es
+  A.classList.remove("moved"); void A.offsetWidth; A.classList.add("moved");
 }
 $("#list").addEventListener("click", e => {
   const b = e.target.closest("[data-mv]"); if (!b || b.disabled) return;
