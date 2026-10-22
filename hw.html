@@ -43,17 +43,16 @@
  Es una página "estática": Los pedidos
  salen por WhatsApp.
 
- ── QUÉ SE EDITA Y DÓNDE (buscá el cartel "✎ EDITÁ ACÁ" con Ctrl+F) ──
+ ── QUÉ SE EDITA Y DÓNDE ──
    1) WHATSAPP ........ línea  let WA_NUMBER = "..."   (en el <script>)
-   2) CAMBIAR PRECIO .. en  PRODUCTOS_BASE  cambiá el número de  precio:
-   3) OFERTA .......... precio:10000 (el nuevo) + antes:12000 (el viejo)
-                        → muestra el viejo tachado y el % de descuento
-   4) AGOTADO ......... disponible:false  (vuelve a  true  cuando hay)
-   5) NUEVA HAMBURGUESA  copiá una línea de PRODUCTOS_BASE, cambiá el id
-                        (número que no se repita) y subí la foto a fotos/
-   6) SACAR PRODUCTO .. borrá su línea (o ponele // adelante)
-   7) CATEGORÍA NUEVA . sumala en  CATEGORIAS  y usá su id en  cat:
-   8) COLORES ......... variables al comienzo del <style> (:root)
+   2) PRECIOS · OFERTAS · AGOTADO · OCULTAR → desde admin.html (o a mano en menu.json)
+   3) NUEVA HAMBURGUESA  agregá UNA línea en menu.json (id y foto son opcionales):
+        {"cat":"premium","nombre":"Nombre Exacto","precio":15000,"desc":"Carne x1, cheddar x2..."},
+      y subí la foto a  fotos/nombre-exacto.jpg  (minúsculas, con guiones y sin tildes).
+      Categorías: promos · clasicas · premium · bebidas   (las bebidas no llevan foto)
+   4) SACAR PRODUCTO .. borrá su línea de menu.json (o ocultalo desde el panel)
+   5) CATEGORÍA NUEVA . sumala en  CATEGORIAS  (acá en el index) y usá su id en  "cat"
+   6) COLORES ......... variables al comienzo del <style> (:root)
 
  ── CÓMO SE PUBLICA UN CAMBIO ──
    Guardás el archivo y lo volvés a subir (GitHub Pages, Netlify, etc.).
@@ -1621,57 +1620,61 @@ const estaOculto = p => p.oculto === true || (p.cat === "promos" && p.disponible
      Marcar como agotada .... disponible:false
      ⚠ Respetá las comas al final de cada línea y las comillas "".
    ═══════════════════════════════════════════════════════════ */
+/* RESPALDO: se usa solo si menu.json no carga. El menú real vive en menu.json. */
 const PRODUCTOS_BASE = [
-  /* ── PROMOS (se muestran solo si están activadas en el panel) ── */
-  { id:31, cat:"promos", nombre:"Dúo Clásico", precio:23000, antes:27000, foto:"fotos/clasica-simple.jpg", etiqueta:"Combo", disponible:true,
-    desc:"2 Clásicas Simples + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
-  { id:32, cat:"promos", nombre:"Dúo Doble", precio:26500, antes:31000, foto:"fotos/clasica-doble.jpg", etiqueta:"Combo", disponible:true,
-    desc:"2 Clásicas Dobles + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
-  { id:33, cat:"promos", nombre:"Dúo Rost BBQ", precio:28000, antes:33000, foto:"fotos/doble-rost-bbq.jpg", etiqueta:"Combo · La de la casa", disponible:true,
-    desc:"2 Dobles Rost BBQ + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
-  { id:34, cat:"promos", nombre:"Dúo Triple BBQ", precio:29500, antes:35000, foto:"fotos/clasica-triple-bbq.jpg", etiqueta:"Combo", disponible:true,
-    desc:"2 Clásicas Triple BBQ + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
-  { id:35, cat:"promos", nombre:"Dúo Palta", precio:31500, antes:37000, foto:"fotos/triple-palta.jpg", etiqueta:"Combo", disponible:true,
-    desc:"2 Triple Palta + 2 gaseosas de 500 ml a elección. Cada hamburguesa incluye su porción de papas fritas. Aclará los sabores en el pedido." },
-
+  /* ── PROMOS ── */
+  { id:31, cat:"promos", nombre:"Super Promo Clásica Simple", precio:20000, antes:25000, foto:"fotos/clasica-simple.jpg", etiqueta:"Super promo", disponible:true,
+    desc:"2 Clásicas Simples + 2 gaseosas de 500 ml. Todas las promos vienen con papas. Aclará los sabores de las gaseosas en el pedido." },
+  { id:32, cat:"promos", nombre:"Super Promo Clásica Doble", precio:24000, antes:29000, foto:"fotos/clasica-doble.jpg", etiqueta:"Super promo", disponible:true,
+    desc:"2 Clásicas Dobles + 2 gaseosas de 500 ml. Todas las promos vienen con papas. Aclará los sabores de las gaseosas en el pedido." },
   /* ── CLÁSICAS ── */
-  { id:1, cat:"clasicas", nombre:"Clásica Simple", precio:11000, foto:"fotos/clasica-simple.jpg", disponible:true,
-    desc:"Medallón de carne, cheddar fundido, bacon crocante, mayonesa y ketchup. Incluye porción de papas fritas." },
-  { id:2, cat:"clasicas", nombre:"Clásica Doble", precio:13000, foto:"fotos/clasica-doble.jpg", disponible:true,
-    desc:"Dos medallones, doble cheddar, bacon crocante, mayonesa y ketchup. Incluye porción de papas fritas." },
-  { id:3, cat:"clasicas", nombre:"Doble Rost BBQ", precio:14000, foto:"fotos/doble-rost-bbq.jpg", etiqueta:"La de la casa", disponible:true,
-    desc:"Dos medallones, cuádruple cheddar, bacon, pepinillos y salsa barbacoa. Incluye porción de papas fritas." },
-  { id:4, cat:"clasicas", nombre:"Clásica Triple BBQ", precio:15000, foto:"fotos/clasica-triple-bbq.jpg", disponible:true,
-    desc:"Tres medallones, triple cheddar, bacon crocante, verdeo y barbacoa. Incluye porción de papas fritas." },
-
+  { id:1, cat:"clasicas", nombre:"Clásica Simple", precio:10000, foto:"fotos/clasica-simple.jpg", disponible:true,
+    desc:"Carne x1, cheddar x1, bacon y aderezos (mayonesa y ketchup). Incluye porción de papas fritas." },
+  { id:2, cat:"clasicas", nombre:"Clásica Doble", precio:12000, foto:"fotos/clasica-doble.jpg", disponible:true,
+    desc:"Carne x2, cheddar x2, bacon y aderezos (mayonesa y ketchup). Incluye porción de papas fritas." },
+  { id:3, cat:"clasicas", nombre:"Doble Rost", precio:13000, foto:"fotos/doble-rost-bbq.jpg", etiqueta:"La de la casa", disponible:true,
+    desc:"Carne x2, cheddar x4, bacon, pepinillos y barbacoa. Incluye porción de papas fritas." },
+  { id:4, cat:"clasicas", nombre:"Clásica Triple", precio:14000, foto:"fotos/clasica-triple-bbq.jpg", disponible:true,
+    desc:"Carne x3, cheddar x3, bacon, verdeo y barbacoa. Incluye porción de papas fritas." },
   /* ── PREMIUM ── */
-  { id:5, cat:"premium", nombre:"Premium Ahumada Simple", precio:12000, foto:"fotos/premium-ahumada-simple.jpg", disponible:true,
-    desc:"Medallón de carne, doble cheddar, bacon, pepinillos y mayonesa ahumada. Incluye porción de papas fritas." },
-  { id:6, cat:"premium", nombre:"Premium Malbec Doble", precio:14000, foto:"fotos/premium-malbec-doble.jpg", disponible:true,
-    desc:"Pan de papa con parmesano, dos medallones, cuádruple cheddar, cebolla caramelizada al malbec y mayonesa ahumada. Incluye porción de papas fritas." },
-  { id:7, cat:"premium", nombre:"Premium Rost Cuádruple", precio:18000, foto:"fotos/premium-rost-cuadruple.jpg", etiqueta:"La más cargada", disponible:true,
-    desc:"Pan de papa con parmesano, cuatro medallones, ocho fetas de cheddar, cebolla caramelizada al malbec, bacon, pepinillos y barbacoa. Incluye porción de papas fritas." },
-
-  /* (la Triple Palta vive en Premium) */
-  { id:8, cat:"premium", nombre:"Triple Palta", precio:16000, foto:"fotos/triple-palta.jpg", disponible:true,
-    desc:"Pan de papa con parmesano, tres medallones, triple queso danbo, tomate y mayonesa de palta. Incluye porción de papas fritas." },
-
-  /* ── BEBIDAS (sin foto) ── */
+  { id:5, cat:"premium", nombre:"Premium Simple", precio:11000, foto:"fotos/premium-ahumada-simple.jpg", disponible:true,
+    desc:"Carne x1, cheddar x2, bacon, pepinillos y mayonesa ahumada. Incluye porción de papas fritas." },
+  { id:6, cat:"premium", nombre:"Premium Doble", precio:13000, foto:"fotos/premium-malbec-doble.jpg", disponible:true,
+    desc:"Pan de papa parmesano, carne x2, cheddar x4, cebolla caramelizada al malbec y mayonesa ahumada. Incluye porción de papas fritas." },
+  { id:8, cat:"premium", nombre:"Palta Triple", precio:15000, foto:"fotos/triple-palta.jpg", disponible:true,
+    desc:"Pan de papa de parmesano, carne x3, queso danbo x3, tomate y mayonesa de palta. Incluye porción de papas fritas." },
+  { id:7, cat:"premium", nombre:"Premium Rost", precio:17000, foto:"fotos/premium-rost-cuadruple.jpg", etiqueta:"La más cargada", disponible:true,
+    desc:"Pan de papa parmesano, carne x4, cheddar x8, cebolla caramelizada al malbec, bacon, pepinillos y barbacoa. Incluye porción de papas fritas." },
+  /* ── BEBIDAS ── */
   { id:21, cat:"bebidas", nombre:"Mirinda 500 ml", precio:2500, disponible:true },
   { id:22, cat:"bebidas", nombre:"Pepsi 500 ml", precio:2500, disponible:true },
   { id:23, cat:"bebidas", nombre:"7UP 500 ml", precio:2500, disponible:true },
   { id:24, cat:"bebidas", nombre:"Paso de los Toros Pomelo 500 ml", precio:2500, disponible:true },
-  { id:25, cat:"bebidas", nombre:"Mirinda 500 ml x2", precio:4000, antes:5000, disponible:true },
-  { id:26, cat:"bebidas", nombre:"Pepsi 500 ml x2", precio:4000, antes:5000, disponible:true },
-  { id:27, cat:"bebidas", nombre:"7UP 500 ml x2", precio:4000, antes:5000, disponible:true },
-  { id:28, cat:"bebidas", nombre:"Paso de los Toros Pomelo 500 ml x2", precio:4000, antes:5000, disponible:true }
+  { id:25, cat:"bebidas", nombre:"Mirinda 500 ml x2", precio:4000, antes:5000, disponible:true, oculto:true },
+  { id:26, cat:"bebidas", nombre:"Pepsi 500 ml x2", precio:4000, antes:5000, disponible:true, oculto:true },
+  { id:27, cat:"bebidas", nombre:"7UP 500 ml x2", precio:4000, antes:5000, disponible:true, oculto:true },
+  { id:28, cat:"bebidas", nombre:"Paso de los Toros Pomelo 500 ml x2", precio:4000, antes:5000, disponible:true, oculto:true }
 ];
 
 /* ⚠ NO TOCAR ─ ESTADO DE LA PÁGINA
    PRODUCTOS : copia de la lista de arriba con la que trabaja la página.
    deliveryMode : "retiro" o "envio" (lo cambia el cliente en el pedido).
    cart : el carrito { idProducto: cantidad }. $ y money son atajos. */
-let PRODUCTOS = PRODUCTOS_BASE.map(p => ({ ...p }));
+/* Completa lo que falte en cada producto, así agregar uno nuevo es solo UNA línea en menu.json:
+   · id   → si no lo ponés, se asigna solo
+   · foto → si no la ponés (y no es bebida), se usa  fotos/<nombre-en-minusculas-con-guiones>.jpg
+            (ej. "Nueva Burger" → fotos/nueva-burger.jpg). Con  foto:""  el producto va sin foto. */
+const slug = t => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+function normalizarProductos(arr) {
+  let mx = Math.max(0, ...arr.map(p => Number(p.id) || 0));
+  return arr.map(p => {
+    const q = { ...p };
+    if (q.id == null) q.id = ++mx;
+    if (q.foto === undefined && q.cat !== "bebidas") q.foto = "fotos/" + slug(q.nombre) + ".jpg";
+    return q;
+  });
+}
+let PRODUCTOS = normalizarProductos(PRODUCTOS_BASE);
 let deliveryMode = "retiro"; // "retiro" | "envio"
 const HALLOWEEN = true;      // 🎃 tema Halloween. Poné false para volver a la página normal
 let CERRADO = false;        // true = local cerrado (zzz): se ve el menú pero no se pide. Lo maneja config.json
@@ -2570,7 +2573,7 @@ async function revisarEstado() {
 }
 (async () => {
   const [d, c] = await Promise.all([leerJSON("menu.json"), leerJSON("config.json")]);
-  if (Array.isArray(d) && d.length) PRODUCTOS = d.map(p => ({ ...p }));
+  if (Array.isArray(d) && d.length) PRODUCTOS = normalizarProductos(d);
   aplicarEstado(c);
   renderCatalog();
   setInterval(revisarEstado, 120000);
