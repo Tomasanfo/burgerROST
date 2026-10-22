@@ -2374,7 +2374,8 @@ $("#send").onclick = () => {
   const rect = sendBtn.getBoundingClientRect();
 
   // Armar el mensaje de WhatsApp con Retiro o Envío + Dirección
-  let headerLines = `Hola ROST! 🍔 Quiero hacer este pedido:\n`;
+  const ord = nuevoPedido();
+  let headerLines = `Hola ROST! 🍔 Quiero hacer este pedido:\n🧾 *Pedido N°:* ${ord.num}\n🕒 *Hora:* ${ord.hora} hs · ${ord.fecha}\n`;
   if (clientVal) headerLines += `👤 *Cliente:* ${clientVal}\n`;
   if (deliveryMode === "envio") {
     headerLines += `🛵 *Modalidad:* Envío a domicilio\n📍 *Dirección:* ${addressVal}\n`;
@@ -2540,6 +2541,15 @@ function aplicarEstado(c) {
   document.body.classList.toggle("cerrado", CERRADO);
   ENVIO = { min: Math.max(0, Number(c && c.envioMin) || 0), max: Math.max(0, Number(c && c.envioMax) || 0) };
   pintarEnvio();
+}
+// N° de pedido: siempre empieza con 0 y sale de la fecha/hora de Argentina (día + hhmmss), ej: 022-214305.
+// Así es único sin necesitar servidor y además te dice cuándo se hizo.
+function nuevoPedido() {
+  const f = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour12: false,
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const o = {}; f.formatToParts(new Date()).forEach(x => { o[x.type] = x.value; });
+  const hh = o.hour === "24" ? "00" : o.hour;
+  return { num: `0${o.day}-${hh}${o.minute}${o.second}`, hora: `${hh}:${o.minute}`, fecha: `${o.day}/${o.month}/${o.year}` };
 }
 async function leerJSON(url) {
   const ctl = new AbortController();
