@@ -50,6 +50,7 @@
         {"cat":"premium","nombre":"Nombre Exacto","precio":15000,"desc":"Carne x1, cheddar x2..."},
       y subí la foto a  fotos/nombre-exacto.jpg  (minúsculas, con guiones y sin tildes).
       Categorías: promos · clasicas · premium · bebidas   (las bebidas no llevan foto)
+   3b) PROMO DE 2 HAMBURGUESAS → sumale  "duo":true  (muestra el X2 y obliga a elegir 2 gaseosas)
    4) SACAR PRODUCTO .. borrá su línea de menu.json (o ocultalo desde el panel)
    5) CATEGORÍA NUEVA . sumala en  CATEGORIAS  (acá en el index) y usá su id en  "cat"
    6) COLORES ......... variables al comienzo del <style> (:root)
@@ -575,7 +576,7 @@ h2::after {
 .qty-badge {
   position: absolute;
   z-index: 2;
-  top: 14px;
+  bottom: 46px;
   right: 14px;
   background: rgba(0, 0, 0, 0.82);
   border: 1.5px solid var(--or);
@@ -595,6 +596,42 @@ h2::after {
   opacity: 1;
   transform: scale(1);
 }
+
+/* ── GLOBITOS EN LA FOTO (esquina superior derecha) ── */
+.fries-badge { position: absolute; z-index: 5; top: 12px; right: 12px; max-width: 128px; padding: 7px 10px 8px; border-radius: 14px; transform: rotate(4deg);
+  font-weight: 900; font-size: 11px; line-height: 1.15; letter-spacing: .3px; text-transform: uppercase; text-align: center; color: #2a0a00;
+  background: linear-gradient(135deg, #ffd84a, #ffa800); border: 2px solid #fff3c4; box-shadow: 0 6px 16px rgba(0,0,0,.55); animation: badgeWiggle 3.4s ease-in-out infinite; pointer-events: none; }
+.fries-badge::after { content: ""; position: absolute; left: 14px; bottom: -9px; border: 7px solid transparent; border-top-color: #ffa800; border-bottom: 0; }
+/* ── CARTEL DE NEÓN DE LAS PROMOS: X2 gigante + "x2 papas" + "x2 bebidas" (titila como un neón real) ── */
+.promo-neon { position: absolute; z-index: 5; top: 10px; right: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; pointer-events: none; transform: rotate(-3deg);
+  --n-core: #fff3e0; --n-mid: #ffb347; --n-glow: #ff9800; --n-far: #ff5a00; }
+.promo-neon::before { content: ""; position: absolute; inset: -14px -16px; z-index: -1; border-radius: 28px; background: radial-gradient(closest-side, rgba(0,0,0,.62), rgba(0,0,0,.3) 65%, transparent); }
+.halloween .promo-neon { --n-core: #ffe9e6; --n-mid: #ff6a5e; --n-glow: #ff2a2a; --n-far: #b00000; }
+.pn-big { font-weight: 900; font-size: clamp(46px, 15vw, 68px); line-height: .9; letter-spacing: 1px; color: var(--n-core);
+  text-shadow: 0 0 3px #fff, 0 0 8px var(--n-mid), 0 0 16px var(--n-glow), 0 0 30px var(--n-glow), 0 0 54px var(--n-far); animation: pnFlickBig 3.6s infinite; }
+.pn-line { font-weight: 800; font-size: clamp(9.5px, 2.9vw, 12.5px); line-height: 1; letter-spacing: .4px; text-transform: uppercase; white-space: nowrap; color: var(--n-core);
+  padding: 4px 10px 4px; border-radius: 999px; border: 1.5px solid var(--n-mid); background: rgba(0,0,0,.35);
+  text-shadow: 0 0 3px var(--n-mid), 0 0 8px var(--n-glow);
+  box-shadow: 0 0 5px var(--n-glow), 0 0 14px var(--n-far), inset 0 0 6px rgba(255,152,0,.45); animation: pnFlickLine 5.3s infinite; }
+.pn-line + .pn-line { animation-duration: 6.7s; animation-delay: -2.1s; }
+@keyframes pnFlickBig { 0%,12%,14%,16%,46%,48%,70%,100% { opacity: 1; } 13%,15% { opacity: .25; } 47% { opacity: .5; } 71%,73% { opacity: .15; } 72% { opacity: .9; } }
+@keyframes pnFlickLine { 0%,30%,32%,62%,64%,100% { opacity: 1; } 31% { opacity: .2; } 63% { opacity: .45; } }
+@keyframes badgeWiggle { 0%,100% { transform: rotate(4deg); } 50% { transform: rotate(-2deg); } }
+@media (prefers-reduced-motion: reduce) { .fries-badge, .pn-big, .pn-line { animation: none !important; } }
+
+/* ── ELEGIR GASEOSAS DE LAS PROMOS DÚO ── */
+.pick { margin: 8px 0 14px; padding: 10px 12px; border-radius: 14px; background: rgba(255,167,38,.08); border: 1px dashed rgba(255,167,38,.55); display: grid; gap: 8px; }
+.pick-t { font-weight: 800; font-size: 14px; color: var(--or); }
+.pick-sub { font-size: 12.5px; color: #d8c7a8; margin-top: -4px; }
+.pick.done { border-color: rgba(76,211,123,.6); background: rgba(76,211,123,.07); }
+.pick.done .pick-t { color: var(--gr); }
+.toast-msg { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 10000; max-width: min(92vw, 420px); transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  background: rgba(20,20,20,.96); color: #fff; border: 1.5px solid var(--or); border-radius: 16px; padding: 12px 16px; font-weight: 800; font-size: 14.5px; line-height: 1.3; text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,.7), 0 0 18px rgba(255,167,38,.25); transition: opacity .25s, transform .3s cubic-bezier(.34,1.56,.64,1); }
+.toast-msg.show { opacity: 1; transform: translate(-50%, 0); }
+.pick-sel { width: 100%; font: inherit; font-size: 16px; color: #fff; background: #0f0f0f; border: 1.5px solid var(--line); border-radius: 12px; padding: 11px 12px; }
+.pick-sel:focus { outline: none; border-color: var(--or); }
+.pick-sel.err { border-color: #ff5252; animation: inputShake .4s ease; }
 
 .bd {
   position: relative;
@@ -1603,10 +1640,12 @@ const estaOculto = p => p.oculto === true || (p.cat === "promos" && p.disponible
 /* RESPALDO: se usa solo si menu.json no carga. El menú real vive en menu.json. */
 const PRODUCTOS_BASE = [
   /* ── PROMOS ── */
-  { id:31, cat:"promos", nombre:"Super Promo Clásica Simple", precio:20000, antes:25000, foto:"fotos/clasica-simple.jpg", etiqueta:"Super promo", disponible:true,
-    desc:"2 Clásicas Simples + 2 gaseosas de 500 ml. Todas las promos vienen con papas. Aclará los sabores de las gaseosas en el pedido." },
-  { id:32, cat:"promos", nombre:"Super Promo Clásica Doble", precio:24000, antes:29000, foto:"fotos/clasica-doble.jpg", etiqueta:"Super promo", disponible:true,
-    desc:"2 Clásicas Dobles + 2 gaseosas de 500 ml. Todas las promos vienen con papas. Aclará los sabores de las gaseosas en el pedido." },
+  { id:31, cat:"promos", nombre:"Super Promo Clásica Simple", precio:20000, antes:25000, foto:"fotos/clasica-simple.jpg", etiqueta:"Super promo", duo:true, disponible:true,
+    desc:"2 Clásicas Simples + 2 gaseosas de 500 ml. Todas las promos vienen con papas (x2 porción). Elegís las gaseosas al armar el pedido." },
+  { id:32, cat:"promos", nombre:"Super Promo Clásica Doble", precio:24000, antes:29000, foto:"fotos/clasica-doble.jpg", etiqueta:"Super promo", duo:true, disponible:true,
+    desc:"2 Clásicas Dobles + 2 gaseosas de 500 ml. Todas las promos vienen con papas (x2 porción). Elegís las gaseosas al armar el pedido." },
+  { id:33, cat:"promos", nombre:"Super Promo Clásica Triple", precio:28000, antes:33000, foto:"fotos/clasica-triple-bbq.jpg", etiqueta:"Super promo", duo:true, disponible:true,
+    desc:"2 Clásicas Triples + 2 gaseosas de 500 ml. Todas las promos vienen con papas (x2 porción). Elegís las gaseosas al armar el pedido." },
   /* ── CLÁSICAS ── */
   { id:1, cat:"clasicas", nombre:"Clásica Simple", precio:10000, foto:"fotos/clasica-simple.jpg", disponible:true,
     desc:"Carne x1, cheddar x1, bacon y aderezos (mayonesa y ketchup). Incluye porción de papas fritas." },
@@ -2050,6 +2089,7 @@ const burgerHTML = p => {
         loading="lazy"
       >
       ${p.etiqueta ? `<span class="tag">${p.etiqueta}</span>` : ""}
+      ${p.duo ? `<div class="promo-neon" aria-label="Incluye 2 porciones de papas fritas y 2 bebidas a elección"><span class="pn-big">X2</span><span class="pn-line">x2 porción de papas fritas</span><span class="pn-line">x2 bebidas a elección</span></div>` : (p.foto ? `<span class="fries-badge">🍟 + Porción de<br>papas fritas</span>` : "")}
       ${hasPromo ? `<span class="promo-pill">🔥 ${pct}% OFF</span>` : ""}
       ${isSoldOut ? `<div class="soldout-overlay"><span class="soldout-badge">🚫 No disponible hoy</span></div>` : ""}
       <span class="qty-badge" data-badge="${p.id}">1 en tu pedido</span>
@@ -2117,6 +2157,20 @@ function renderCatalog() {
    Actualiza la barra de abajo, los contadores de cada tarjeta, la lista del
    pedido y el total. Se llama cada vez que cambia algo del carrito.
    ⚠ NO TOCAR: casi todo depende de esta función. ── */
+/* ── GASEOSAS DE LAS PROMOS DÚO: hay que elegirlas sí o sí (2 por cada promo en el pedido) ── */
+const drinkPick = {};   // id de la promo → ["Pepsi 500 ml", "", ...]
+const gaseosaOpciones = () => PRODUCTOS.filter(p => p.cat === "bebidas" && !estaOculto(p) && p.disponible !== false && !/x\s*2\s*$/i.test(p.nombre)).map(p => p.nombre);
+function syncPicks(ids) {
+  const opts = gaseosaOpciones();
+  Object.keys(drinkPick).forEach(k => { if (!ids.includes(k)) delete drinkPick[k]; });
+  ids.forEach(k => {
+    const p = find(k); if (!p || !p.duo) return;
+    const arr = drinkPick[k] || (drinkPick[k] = []);
+    arr.length = cart[k] * 2;
+    for (let i = 0; i < arr.length; i++) if (!arr[i] || !opts.includes(arr[i])) arr[i] = "";
+  });
+}
+
 function draw(animatedId = null) {
   const ids = Object.keys(cart).filter(k => cart[k] > 0 && find(k) && find(k).disponible !== false);
   const n = ids.reduce((a, k) => a + cart[k], 0);
@@ -2147,19 +2201,37 @@ function draw(animatedId = null) {
     }
   });
 
+  syncPicks(ids);
+  const opts = gaseosaOpciones();
   $("#items").innerHTML = ids.map(k => {
     const p = find(k);
+    let pick = "";
+    if (p.duo && opts.length) {
+      pick = `<div class="pick${drinkPick[k].every(Boolean) ? " done" : ""}"><div class="pick-t">🥤 ¡Esta promo incluye ${cart[k] * 2} bebidas!</div><div class="pick-sub">Elegí ${cart[k] * 2 === 2 ? "las 2" : "las " + cart[k] * 2} que quieras de las disponibles hoy.</div>` +
+        drinkPick[k].map((v, i) => `<select class="pick-sel" data-pick="${k}" data-i="${i}" aria-label="Gaseosa">
+          <option value="">${cart[k] > 1 ? `Promo ${Math.floor(i / 2) + 1} · ` : ""}Bebida ${i % 2 + 1}: elegí una…</option>
+          ${opts.map(o => `<option${o === v ? " selected" : ""}>${o}</option>`).join("")}
+        </select>`).join("") + `</div>`;
+    }
     return `<div class="it">
       <span>${p.nombre}<em>${money(p.precio)} c/u</em></span>
       <button class="qb" data-rem="${k}" aria-label="Quitar">−</button>
       <b class="q">${cart[k]}</b>
       <button class="qb" data-add="${k}" aria-label="Sumar">+</button>
-    </div>`;
+    </div>${pick}`;
   }).join("");
 
   if (!n) closeSheet();
   return { ids, t };
 }
+
+$("#items").addEventListener("change", e => {
+  const sel = e.target.closest(".pick-sel"); if (!sel) return;
+  drinkPick[sel.dataset.pick][Number(sel.dataset.i)] = sel.value;
+  sel.classList.remove("err");
+  const box = sel.closest(".pick");
+  if (box) box.classList.toggle("done", [...box.querySelectorAll(".pick-sel")].every(x => x.value));
+});
 
 /* ── AGREGAR AL CARRITO CON ANIMACIÓN: suma 1, suena, saltan emojis y rebota la tarjeta ── */
 function addItemWithJuice(id, clientX, clientY) {
@@ -2169,6 +2241,7 @@ function addItemWithJuice(id, clientX, clientY) {
 
   cart[id] = (cart[id] || 0) + 1;
   draw(id);
+  if (prod.duo && cart[id] === 1 && gaseosaOpciones().length) showToast("🥤 Esta promo incluye 2 bebidas: las elegís al ver tu pedido");
 
   playAddSound();
   if (navigator.vibrate) navigator.vibrate(12);
@@ -2232,6 +2305,8 @@ function openSheet() {
   $("#sheet").classList.add("on");
   document.body.classList.add("locked");
   playSoftTick(420);
+  // Si hay una promo con bebidas sin elegir, avisamos
+  if (Object.values(drinkPick).some(a => a.some(v => !v))) setTimeout(() => showToast("🥤 Tu promo incluye 2 bebidas: elegilas para poder pedir"), 380);
 }
 function closeSheet() {
   $("#sheet").classList.remove("on");
@@ -2256,6 +2331,16 @@ $("#send").onclick = () => {
   const addressVal = $("#addressInput").value.trim();
   const clientVal = $("#clientNameInput").value.trim();
   const noteVal = $("#note").value.trim();
+
+  // Promos dúo: hay que elegir las gaseosas
+  if (gaseosaOpciones().length && ids.some(k => find(k).duo && drinkPick[k] && drinkPick[k].some(v => !v))) {
+    const sel = [...document.querySelectorAll(".pick-sel")].find(x => !x.value);
+    if (sel) { sel.classList.remove("err"); void sel.offsetWidth; sel.classList.add("err"); sel.scrollIntoView({ block: "center", behavior: "smooth" }); }
+    playSoftTick(160);
+    showToast("🥤 Tu promo incluye 2 bebidas: ¡elegilas para continuar!");
+    if (navigator.vibrate) navigator.vibrate([40, 40, 40]);
+    return;
+  }
 
   // Validar nombre obligatorio
   if (!clientVal) {
@@ -2297,7 +2382,14 @@ $("#send").onclick = () => {
     headerLines += `🏪 *Modalidad:* Retiro en el local\n`;
   }
 
-  let itemsLines = ids.map(k => `• ${cart[k]}x ${find(k).nombre} (${money(cart[k] * find(k).precio)})`).join("\n");
+  let itemsLines = ids.map(k => {
+    let l = `• ${cart[k]}x ${find(k).nombre} (${money(cart[k] * find(k).precio)})`;
+    const pk = find(k).duo && drinkPick[k];
+    if (pk && pk.length && pk.every(Boolean)) {
+      for (let u = 0; u < cart[k]; u++) l += `\n   🥤 ${cart[k] > 1 ? `Promo ${u + 1}: ` : ""}${pk[u * 2]} + ${pk[u * 2 + 1]}`;
+    }
+    return l;
+  }).join("\n");
   let m = `${headerLines}\n${itemsLines}\n\n💰 *Total: ${money(t)}*`;
   if (noteVal) m += `\n📝 *Aclaraciones:* ${noteVal}`;
 

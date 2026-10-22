@@ -37,6 +37,9 @@ button:disabled{opacity:.45}
 .status b{font-size:16px}
 .sl{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;color:var(--tx)}
 .row.dirty{border-color:var(--or)}
+.mv{display:flex;gap:6px}
+.mv button{padding:6px 12px;font-size:16px;line-height:1;background:#262626;color:var(--or);border-radius:10px}
+.mv button:disabled{opacity:.2}
 .sw{position:relative;display:block;width:50px;height:28px;flex:none;margin:0}
 .sw input{opacity:0;position:absolute;inset:0;width:100%;height:100%;margin:0;z-index:1;cursor:pointer}
 .sw span{position:absolute;inset:0;background:#3a3a3a;border-radius:99px;transition:.2s}
@@ -95,6 +98,7 @@ ol b{color:var(--tx)}
       </div>
       <div style="margin-top:12px"><button id="envSave">Guardar envío</button></div>
     </div>
+    <p class="s">Con las flechas <b>▲▼</b> cambiás el orden en que se muestran dentro de cada categoría (las promos siempre van primero).</p>
     <p class="s"><b>Visible</b> apagado = el producto <b>no se muestra</b> en la página. <b>Hay stock</b> apagado = se muestra gris como <b>agotado</b> y no se puede pedir (las promos solo tienen "Visible"). Para una <b>oferta</b>, poné el precio nuevo en "Precio hoy" y el viejo en "Antes". Después tocá <b>Publicar</b>.</p>
     <div id="list"></div>
     <div style="margin-top:18px"><button class="g" id="out">Cerrar sesión en este dispositivo</button></div>
@@ -149,6 +153,21 @@ async function load() {
 }
 
 const LABEL = { promos: "Promociones" };
+/* ── ORDEN: ▲▼ mueven el producto dentro de su categoría (el orden de menu.json es el orden en la página) ── */
+const sameCat = p => data.filter(x => x.cat === p.cat);
+const isFirst = p => sameCat(p)[0] === p;
+const isLast = p => { const l = sameCat(p); return l[l.length - 1] === p; };
+function move(p, dir) {
+  const l = sameCat(p), i = l.indexOf(p), o = l[i + dir]; if (!o) return;
+  const ia = data.indexOf(p), ib = data.indexOf(o);
+  data[ia] = o; data[ib] = p;
+  render();
+}
+$("#list").addEventListener("click", e => {
+  const b = e.target.closest("[data-mv]"); if (!b || b.disabled) return;
+  const p = data.find(x => x.id == b.closest(".row").dataset.id);
+  move(p, b.dataset.mv === "up" ? -1 : 1);
+});
 
 /* ── ESTADO DEL LOCAL (abierto / zzz cerrado) · se guarda aparte en config.json y se publica al instante ── */
 function paintCfg() {
@@ -203,11 +222,11 @@ $("#envSave").onclick = async () => {
 };
 
 function render() {
-  const cats = [...new Set(data.map(p => p.cat))];
+  const cats = [...new Set(data.map(p => p.cat))].sort((x, y) => (x === "promos" ? 0 : 1) - (y === "promos" ? 0 : 1)); // las promos SIEMPRE primero
   $("#list").innerHTML = cats.map(c =>
     `<h2>${LABEL[c] || c}</h2>` + data.filter(p => p.cat === c).map(p => `
     <div class="card row" data-id="${p.id}">
-      <div class="top"><b>${p.nombre}</b></div>
+      <div class="top"><b>${p.nombre}</b><div class="mv"><button class="g" data-mv="up" aria-label="Subir" ${isFirst(p) ? "disabled" : ""}>▲</button><button class="g" data-mv="down" aria-label="Bajar" ${isLast(p) ? "disabled" : ""}>▼</button></div></div>
       <div class="sws">
         <label class="sl"><span class="sw"><input type="checkbox" data-f="visible" ${p.oculto ? "" : "checked"}><span></span></span>Visible</label>
         ${p.cat === "promos" ? "" : `<label class="sl"><span class="sw"><input type="checkbox" data-f="disponible" ${p.disponible !== false ? "checked" : ""}><span></span></span>Hay stock</label>`}
@@ -230,8 +249,9 @@ function paint(p) {
   const on = p.antes && p.antes > p.precio;
   pct.classList.toggle("on", !!on);
   pct.textContent = on ? "-" + Math.round((1 - p.precio / p.antes) * 100) + "%" : "";
-  const o = JSON.parse(orig).find(x => x.id === p.id);
-  row.classList.toggle("dirty", JSON.stringify(o) !== JSON.stringify(p));
+  const og = JSON.parse(orig), o = og.find(x => x.id === p.id);
+  const pos = l => l.filter(x => x.cat === p.cat).findIndex(x => x.id === p.id);
+  row.classList.toggle("dirty", JSON.stringify(o) !== JSON.stringify(p) || pos(og) !== pos(data));
 }
 
 function refreshBar() {
@@ -261,6 +281,7 @@ $("#save").onclick = async () => {
   const bad = data.find(p => p.antes && p.antes <= p.precio);
   if (bad) return say(`"${bad.nombre}": el precio "Antes" tiene que ser MAYOR al de hoy (o dejalo vacío).`, false);
   if (data.some(p => !(p.precio > 0))) return say("Hay un producto sin precio.", false);
+  data.sort((x, y) => (x.cat === "promos" ? 0 : 1) - (y.cat === "promos" ? 0 : 1)); // promos siempre primero (orden estable)
   const btn = $("#save"); btn.disabled = true; btn.textContent = "Publicando…";
   try {
     const n = document.querySelectorAll(".row.dirty").length;
