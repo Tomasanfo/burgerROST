@@ -598,10 +598,14 @@ h2::after {
 }
 
 /* ── GLOBITOS EN LA FOTO (esquina superior derecha) ── */
-.fries-badge { position: absolute; z-index: 5; top: 12px; right: 12px; max-width: 128px; padding: 7px 10px 8px; border-radius: 14px; transform: rotate(4deg);
-  font-weight: 900; font-size: 11px; line-height: 1.15; letter-spacing: .3px; text-transform: uppercase; text-align: center; color: #2a0a00;
-  background: linear-gradient(135deg, #ffd84a, #ffa800); border: 2px solid #fff3c4; box-shadow: 0 6px 16px rgba(0,0,0,.55); animation: badgeWiggle 3.4s ease-in-out infinite; pointer-events: none; }
-.fries-badge::after { content: ""; position: absolute; left: 14px; bottom: -9px; border: 7px solid transparent; border-top-color: #ffa800; border-bottom: 0; }
+.fries-badge { position: absolute; z-index: 5; top: 12px; right: 12px; max-width: 132px; padding: 6px 11px 7px; border-radius: 16px; transform: rotate(-3deg); pointer-events: none;
+  --n-core: #fff3e0; --n-mid: #ffb347; --n-glow: #ff9800; --n-far: #ff5a00;
+  font-weight: 800; font-size: 11px; line-height: 1.2; letter-spacing: .4px; text-transform: uppercase; text-align: center; color: var(--n-core);
+  background: rgba(0,0,0,.35); border: 1.5px solid var(--n-mid);
+  text-shadow: 0 0 3px var(--n-mid), 0 0 8px var(--n-glow);
+  box-shadow: 0 0 5px var(--n-glow), 0 0 14px var(--n-far), inset 0 0 6px rgba(255,152,0,.45); animation: pnFlickLine 5.3s infinite; }
+.fries-badge::before { content: ""; position: absolute; inset: -12px -14px; z-index: -1; border-radius: 26px; background: radial-gradient(closest-side, rgba(0,0,0,.6), rgba(0,0,0,.28) 65%, transparent); }
+.halloween .fries-badge { --n-core: #ffe9e6; --n-mid: #ff6a5e; --n-glow: #ff2a2a; --n-far: #b00000; }
 /* ── CARTEL DE NEÓN DE LAS PROMOS: X2 gigante + "x2 papas" + "x2 bebidas" (titila como un neón real) ── */
 .promo-neon { position: absolute; z-index: 5; top: 10px; right: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; pointer-events: none; transform: rotate(-3deg);
   --n-core: #fff3e0; --n-mid: #ffb347; --n-glow: #ff9800; --n-far: #ff5a00; }
@@ -1591,7 +1595,7 @@ window.resolveRealPhoto = function(img) {
    Ejemplo Argentina (Río Negro, 0298 15-412345): "5492984412345"
    Si queda vacío ("") el botón de pedir NO va a funcionar.
    ═══════════════════════════════════════════════════════════ */
-let WA_NUMBER = "5492984333857";
+let WA_NUMBER = "5492984597634";
 
 /* ═══════════════════════════════════════════════════════════
    ✎ EDITÁ ACÁ ─ 2) CATEGORÍAS (las secciones del menú)
@@ -2079,7 +2083,7 @@ const burgerHTML = p => {
   const pct = hasPromo ? Math.round((1 - p.precio / p.antes) * 100) : 0;
   const isSoldOut = p.disponible === false;
 
-  return `<article class="burger in ${isSoldOut ? "sold-out" : ""}" data-card="${p.id}">
+  return `<article class="burger in ${isSoldOut ? "sold-out" : ""}${Number(p.giro) > 1 ? " has360" : ""}" data-card="${p.id}">
     <div class="ph">
       <img
         src="${p.foto}"
@@ -2089,6 +2093,7 @@ const burgerHTML = p => {
         loading="lazy"
       >
       ${p.etiqueta ? `<span class="tag">${p.etiqueta}</span>` : ""}
+      ${Number(p.giro) > 1 ? `<span class="b360">↻ 360°</span>` : ""}
       ${p.duo ? `<div class="promo-neon" aria-label="Incluye 2 porciones de papas fritas y 2 bebidas a elección"><span class="pn-big">X2</span><span class="pn-line">x2 porción de papas fritas</span><span class="pn-line">x2 bebidas a elección</span></div>` : (p.foto ? `<span class="fries-badge">🍟 + Porción de<br>papas fritas</span>` : "")}
       ${hasPromo ? `<span class="promo-pill">🔥 ${pct}% OFF</span>` : ""}
       ${isSoldOut ? `<div class="soldout-overlay"><span class="soldout-badge">🚫 No disponible hoy</span></div>` : ""}
@@ -2574,6 +2579,179 @@ async function revisarEstado() {
   renderCatalog();
   setInterval(revisarEstado, 120000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) revisarEstado(); });
+})();
+</script>
+
+<!-- ═══════════ VISOR 360° DE HAMBURGUESAS ═══════════
+     Se activa solo en los productos de menu.json que tengan  "giro": 48  (cantidad de frames).
+     Frames:  fotos/360/<nombre-con-guiones>/001.webp, 002.webp …  (o  "giroDir":"fotos/360/otra-carpeta"). -->
+<style>
+.b360 { position:absolute; z-index:2; bottom:46px; left:14px; background:rgba(0,0,0,.82); border:1.5px solid var(--or); color:var(--or); font-weight:900; font-size:12px; letter-spacing:.4px; border-radius:999px; padding:5px 11px; backdrop-filter:blur(8px); box-shadow:0 4px 14px rgba(0,0,0,.5); pointer-events:none; }
+.burger.has360 .ph { cursor:pointer; }
+.v360 { position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; background:rgba(5,5,5,.98); opacity:0; visibility:hidden; transition:opacity .25s, visibility .25s; }
+.v360.on { opacity:1; visibility:visible; }
+.v360-x { position:absolute; z-index:3; top:calc(14px + env(safe-area-inset-top,0px)); right:14px; width:44px; height:44px; border-radius:50%; border:1.5px solid var(--line); background:rgba(17,17,17,.9); color:#fff; font-size:26px; line-height:1; cursor:pointer; }
+.v360-stage { position:relative; flex:1; min-height:0; touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none; }
+.v360-stage.drag { cursor:grabbing; }
+.v360-stage canvas { width:100%; height:100%; object-fit:contain; display:block; }
+.v360-bar { position:absolute; top:0; left:0; height:3px; width:0; background:var(--or); box-shadow:0 0 10px var(--or-glow); transition:width .2s, opacity .4s; }
+.v360-hint { position:absolute; left:0; right:0; bottom:14px; text-align:center; color:var(--or); font-weight:800; font-size:14px; letter-spacing:.3px; text-shadow:0 0 12px var(--or-glow); pointer-events:none; opacity:0; transition:opacity .4s; }
+.v360.ready .v360-hint { opacity:1; }
+.v360.touched .v360-hint { opacity:0; }
+.v360.ready .v360-bar { opacity:0; }
+.v360-info { padding:16px 18px calc(18px + env(safe-area-inset-bottom,0px)); background:var(--card); border-top:1px solid var(--line); }
+.v360-info h3 { margin:0 0 4px; font-size:20px; }
+.v360-info p { margin:0 0 12px; color:var(--mut); font-size:13.5px; line-height:1.4; }
+.v360-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.v360-row s { color:var(--mut); font-size:13px; margin-right:6px; }
+.v360-row .price { font-size:22px; font-weight:900; color:var(--or); }
+.v360-row small { display:block; color:var(--mut); font-size:12px; }
+</style>
+<script>
+(() => {
+  const SENTIDO = 1;            // si al deslizar gira para el lado contrario, cambiá a -1
+  const AUTO = 0.007;           // giro automático (frames por milisegundo)
+  const ROOT = "fotos/360/";
+  const pad = i => String(i).padStart(3, "0");
+
+  const root = document.createElement("div");
+  root.className = "v360";
+  root.setAttribute("role", "dialog");
+  root.setAttribute("aria-modal", "true");
+  root.innerHTML = `
+    <button class="v360-x" aria-label="Cerrar">×</button>
+    <div class="v360-stage">
+      <canvas width="720" height="540"></canvas>
+      <div class="v360-bar"></div>
+      <div class="v360-hint">👆 Deslizá para girarla</div>
+    </div>
+    <div class="v360-info">
+      <h3></h3><p></p>
+      <div class="v360-row">
+        <div><span class="old"></span><span class="price"></span><small></small></div>
+        <button class="add"></button>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+
+  const $v = s => root.querySelector(s);
+  const stage = $v(".v360-stage"), cv = $v("canvas"), ctx = cv.getContext("2d"), bar = $v(".v360-bar");
+  const addBtn = $v(".add");
+
+  let frames = [], n = 0, pos = 0, vel = 0, ready = false, dragging = false;
+  let lastX = 0, lastT = 0, idleAt = 0, raf = 0, lastTs = 0, token = 0, curId = null;
+
+  const paint = () => {
+    if (!n) return;
+    const im = frames[((Math.round(pos) % n) + n) % n];
+    if (im) ctx.drawImage(im, 0, 0, cv.width, cv.height);
+  };
+  const sizeTo = im => { cv.width = im.naturalWidth; cv.height = im.naturalHeight; };
+  const load = src => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+
+  function syncInfo() {
+    const p = find(curId); if (!p) return;
+    const en = cart[p.id] || 0;
+    $v("small").textContent = en ? en + " en tu pedido" : "";
+    addBtn.dataset.add = p.id;
+    if (CERRADO) { addBtn.disabled = true; addBtn.textContent = "Cerrado"; }
+    else if (p.disponible === false) { addBtn.disabled = true; addBtn.textContent = "Agotada"; }
+    else { addBtn.disabled = false; addBtn.textContent = "Agregar"; }
+  }
+
+  function tick(ts) {
+    raf = requestAnimationFrame(tick);
+    const dt = Math.min(50, ts - (lastTs || ts)); lastTs = ts;
+    if (!ready || dragging) return;
+    if (Math.abs(vel) > 0.001) { pos += vel * dt; vel *= Math.exp(-dt / 400); }
+    else { vel = 0; if (ts > idleAt) pos += AUTO * dt * SENTIDO; }
+    paint();
+  }
+
+  async function abrir360(p) {
+    const t = ++token;
+    curId = p.id; n = Number(p.giro); frames = new Array(n); pos = 0; vel = 0; idleAt = 0; ready = false;
+    root.classList.remove("ready", "touched");
+    bar.style.width = "0";
+    $v("h3").textContent = p.nombre;
+    $v("p").textContent = p.desc || "";
+    const hasPromo = p.antes && Number(p.antes) > Number(p.precio);
+    $v(".old").innerHTML = hasPromo ? `<s>${money(p.antes)}</s>` : "";
+    $v(".price").textContent = money(p.precio);
+    syncInfo();
+    root.classList.add("on");
+    document.body.style.overflow = "hidden";
+    history.pushState({ v360: 1 }, "");
+    lastTs = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
+
+    const base = (p.giroDir || ROOT + slug(p.nombre)).replace(/\/$/, "") + "/";
+    const f0 = await load(base + pad(1) + ".webp");
+    if (t !== token) return;
+    if (!f0) {                                   // sin frames → se ve la foto normal, sin giro
+      const ph = await load(p.foto); if (t !== token) return;
+      if (ph) { sizeTo(ph); frames = [ph]; n = 1; paint(); }
+      return;
+    }
+    sizeTo(f0); frames[0] = f0; paint();
+    let done = 1;
+    await Promise.all(Array.from({ length: n - 1 }, async (_, k) => {
+      const im = await load(base + pad(k + 2) + ".webp");
+      if (t !== token) return;
+      frames[k + 1] = im; done++; bar.style.width = (done / n * 100) + "%";
+    }));
+    if (t !== token) return;
+    if (frames.some(x => !x)) { frames = [f0]; n = 1; paint(); return; }   // falta algún frame → foto fija
+    ready = true; root.classList.add("ready");
+  }
+
+  function cerrar360(desdeAtras) {
+    if (!root.classList.contains("on")) return;
+    root.classList.remove("on"); token++; ready = false;
+    cancelAnimationFrame(raf);
+    document.body.style.overflow = "";
+    if (!desdeAtras && history.state && history.state.v360) history.back();
+  }
+
+  stage.addEventListener("pointerdown", e => {
+    if (!ready) return;
+    dragging = true; vel = 0; lastX = e.clientX; lastT = e.timeStamp;
+    stage.setPointerCapture(e.pointerId); stage.classList.add("drag"); root.classList.add("touched");
+  });
+  stage.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    const ppf = (stage.clientWidth / n) * 1.6;             // píxeles que hay que deslizar por frame
+    const df = (e.clientX - lastX) / ppf * SENTIDO;
+    const dt = Math.max(1, e.timeStamp - lastT);
+    pos += df; vel = 0.7 * vel + 0.3 * (df / dt);
+    lastX = e.clientX; lastT = e.timeStamp; paint();
+  });
+  const soltar = e => {
+    if (!dragging) return;
+    dragging = false; stage.classList.remove("drag");
+    if (e.timeStamp - lastT > 80) vel = 0;                  // si frenó antes de soltar, no sigue
+    idleAt = performance.now() + 3000;                      // 3 s quieta → vuelve a girar sola
+  };
+  stage.addEventListener("pointerup", soltar);
+  stage.addEventListener("pointercancel", soltar);
+
+  $v(".v360-x").addEventListener("click", () => cerrar360());
+  addBtn.addEventListener("click", () => setTimeout(syncInfo, 0));
+  window.addEventListener("popstate", () => cerrar360(true));
+  document.addEventListener("keydown", e => {
+    if (!root.classList.contains("on")) return;
+    if (e.key === "Escape") cerrar360();
+    if (ready && e.key === "ArrowLeft") { pos -= 1; idleAt = performance.now() + 3000; paint(); }
+    if (ready && e.key === "ArrowRight") { pos += 1; idleAt = performance.now() + 3000; paint(); }
+  });
+
+  // Tocar la foto de una hamburguesa con "giro" abre el visor (los botones siguen andando como siempre)
+  document.addEventListener("click", e => {
+    if (e.target.closest("button")) return;
+    const ph = e.target.closest(".burger .ph"); if (!ph) return;
+    const card = ph.closest("[data-card]");
+    const p = card && find(card.dataset.card);
+    if (p && Number(p.giro) > 1) abrir360(p);
+  });
 })();
 </script>
 </body>
