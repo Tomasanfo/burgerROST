@@ -2400,7 +2400,10 @@ $("#send").onclick = () => {
   if (noteVal) m += `\n📝 *Aclaraciones:* ${noteVal}`;
 
   // Link que abre WhatsApp con el pedido ya escrito (usa el número WA_NUMBER de arriba)
-  const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(m)}`;
+  // api.whatsapp.com/send en vez de wa.me: la redirección de wa.me rompe los emojis (se ven como �)
+  // Además se limpian surrogates sueltos (emoji cortado) para que encodeURIComponent no falle.
+  const mLimpio = m.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "");
+  const waUrl = `https://api.whatsapp.com/send?phone=${WA_NUMBER}&text=${encodeURIComponent(mLimpio)}`;
 
   // ── BOCADO 1 (0 ms): Mordida de dientes a la derecha ──
   sendBtn.classList.remove("bite-1", "bite-2", "bite-3");
