@@ -133,14 +133,24 @@ let msgT;
 
 function say(t, ok = true) {
   const m = $("#msg"); m.textContent = t; m.className = ok ? "ok" : "er";
-  clearTimeout(msgT); msgT = setTimeout(() => (m.className = ""), ok ? 4500 : 7000);
+  clearTimeout(msgT); msgT = setTimeout(() => (m.className = ""), ok ? 4500 : 20000);
 }
 const api = (path, opt = {}) =>
   fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
     ...opt,
-    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", ...(opt.headers || {}) },
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json", ...(opt.headers || {}) },
     cache: "no-store"
   });
+
+async function ghErr(r) {
+  let m = ""; try { m = (await r.json()).message || ""; } catch (e) {}
+  const base = r.status === 401 ? "Token inválido o vencido. Generá uno nuevo."
+    : r.status === 403 ? "GitHub rechazó el cambio (403): el token no tiene permiso de escritura en este repo, o venció."
+    : r.status === 404 ? "No encuentro el repo o el archivo (404): revisá el nombre del repo y que el token tenga acceso."
+    : (r.status === 409 || r.status === 422) ? "Conflicto con la versión guardada (" + r.status + "). Recargá la página."
+    : "Error " + r.status + ".";
+  return base + (m ? " · GitHub dice: " + m : "");
+}
 
 async function load() {
   $("#login").classList.add("hide"); $("#panel").classList.add("hide");
@@ -148,7 +158,7 @@ async function load() {
     const r = await api("menu.json?t=" + Date.now());
     if (r.status === 401) throw new Error("Token inválido o vencido.");
     if (r.status === 404) throw new Error("No encuentro menu.json en ese repositorio (o el token no tiene acceso).");
-    if (!r.ok) throw new Error("GitHub respondió " + r.status);
+    if (!r.ok) throw new Error(await ghErr(r));
     const j = await r.json();
     sha = j.sha; data = JSON.parse(b64dec(j.content));
     let mx = Math.max(0, ...data.map(p => Number(p.id) || 0)); data.forEach(p => { if (p.id == null) p.id = ++mx; });
@@ -215,7 +225,7 @@ $("#zzz").addEventListener("change", async e => {
       method: "PUT",
       body: JSON.stringify({ message: want ? "Local: CERRADO (zzz)" : "Local: ABIERTO", content: b64enc(JSON.stringify({ ...cfg, cerrado: want }) + "\n"), sha: cfgSha || undefined })
     });
-    if (!r.ok) throw new Error(r.status === 409 || r.status === 422 ? "Se cambió desde otro lado. Recargá la página." : "No se pudo guardar (" + r.status + ").");
+    if (!r.ok) throw new Error(await ghErr(r));
     cfgSha = (await r.json()).content.sha; cfg = { ...cfg, cerrado: want };
     say(want ? "Local CERRADO 😴 En 1–2 minutos la página deja de tomar pedidos." : "Local ABIERTO 🟢 En 1–2 minutos ya se puede pedir.");
   } catch (err) { say(err.message, false); }
@@ -236,7 +246,7 @@ $("#envSave").onclick = async () => {
       method: "PUT",
       body: JSON.stringify({ message: "Envío: rango de precio", content: b64enc(JSON.stringify(next) + "\n"), sha: cfgSha || undefined })
     });
-    if (!r.ok) throw new Error(r.status === 409 || r.status === 422 ? "Se cambió desde otro lado. Recargá la página." : "No se pudo guardar (" + r.status + ").");
+    if (!r.ok) throw new Error(await ghErr(r));
     cfgSha = (await r.json()).content.sha; cfg = next; paintEnv();
     say("Envío guardado 🛵 En 1–2 minutos lo ven los clientes.");
   } catch (err) { say(err.message, false); }
@@ -311,8 +321,7 @@ $("#save").onclick = async () => {
       method: "PUT",
       body: JSON.stringify({ message: `Menú: ${n} cambio(s) desde el panel`, content: b64enc(serialize(data)), sha })
     });
-    if (r.status === 409 || r.status === 422) throw new Error("El menú cambió desde otro lado. Recargá la página y volvé a probar.");
-    if (!r.ok) throw new Error("No se pudo publicar (" + r.status + "). ¿El token tiene permiso de escritura?");
+        if (!r.ok) throw new Error(await ghErr(r));
     sha = (await r.json()).content.sha; orig = JSON.stringify(data); render();
     say("Publicado ✔ En 1–2 minutos lo ve todo el mundo.");
   } catch (e) { say(e.message, false); }
