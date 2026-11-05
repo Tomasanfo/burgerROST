@@ -42,8 +42,7 @@ button:disabled{opacity:.45}
 .status b{font-size:16px}
 .sl{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;color:var(--tx)}
 .row.dirty{border-color:var(--or)}
-.mv{display:flex;gap:6px}
-.mv{gap:10px}
+.mv{display:flex;gap:10px}
 .mv button{padding:10px 18px;font-size:18px;line-height:1;background:#262626;color:var(--or);border-radius:12px;min-width:52px;touch-action:manipulation}
 .mv button:active:not(:disabled){transform:scale(.9)}
 .row{position:relative}
@@ -61,7 +60,9 @@ button:disabled{opacity:.45}
 .bar .in{max-width:640px;margin:0 auto;display:flex;gap:10px;align-items:center}
 .bar span{flex:1;font-size:13px;color:var(--mut)}
 #msg{position:fixed;left:16px;right:16px;top:calc(10px + env(safe-area-inset-top));max-width:608px;margin:0 auto;padding:12px 14px;border-radius:12px;font-weight:600;display:none;z-index:9}
+#msg{cursor:pointer}
 #msg.ok{background:#12351f;color:#8ff0b0;display:block}
+#msg.er::after{content:" · tocá para cerrar";font-weight:400;opacity:.7}
 #msg.er{background:#3a1515;color:#ff9a9a;display:block}
 .hide{display:none}
 ol{padding-left:18px;color:var(--mut);font-size:13px}
@@ -69,7 +70,7 @@ ol b{color:var(--tx)}
 </style>
 </head>
 <body>
-<div id="msg"></div>
+<div id="msg" role="status" aria-live="polite"></div>
 <div class="wrap">
   <h1>🍔 Panel del local</h1>
 
@@ -89,6 +90,7 @@ ol b{color:var(--tx)}
       <li><b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b></li>
       <li><b>Repository access</b>: Only select repositories → elegí el repo de la página</li>
       <li><b>Permissions → Contents: Read and write</b></li>
+      <li><b>Expiration</b>: elegí 90 días (cuando venza, generás otro)</li>
       <li>Generate, copiá el token y pegalo arriba</li>
     </ol>
   </div>
@@ -98,6 +100,7 @@ ol b{color:var(--tx)}
     <div class="card status" id="statusCard">
       <label class="sl"><span class="sw red"><input type="checkbox" id="zzz"><span></span></span><b id="zzzTxt">…</b></label>
       <p class="s" id="zzzSub" style="margin:8px 0 0"></p>
+      <button class="g hide" id="cfgRetry" style="margin-top:10px">Reintentar</button>
     </div>
     <div class="card">
       <b>🛵 Costo del envío</b>
@@ -110,6 +113,7 @@ ol b{color:var(--tx)}
     </div>
     <p class="s">Con las flechas <b>▲▼</b> cambiás el orden en que se muestran dentro de cada categoría (las promos siempre van primero).</p>
     <p class="s"><b>Visible</b> apagado = el producto <b>no se muestra</b> en la página. <b>Hay stock</b> apagado = se muestra gris como <b>agotado</b> y no se puede pedir (las promos solo tienen "Visible"). Para una <b>oferta</b>, poné el precio nuevo en "Precio hoy" y el viejo en "Antes". Después tocá <b>Publicar</b>.</p>
+    <label class="sl" style="margin:0 0 4px"><span class="sw"><input type="checkbox" id="showHid"><span></span></span>Mostrar productos ocultos (<span id="hidN">0</span>)</label>
     <div id="list"></div>
     <div style="margin-top:18px"><button class="g" id="out">Cerrar sesión en este dispositivo</button></div>
   </div>
@@ -121,20 +125,31 @@ ol b{color:var(--tx)}
 const $ = s => document.querySelector(s);
 const LS = k => { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } };
 const LSset = (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} };
-const money = n => "$" + Number(n || 0).toLocaleString("es-AR");
-const b64enc = s => btoa(unescape(encodeURIComponent(s)));
-const b64dec = s => decodeURIComponent(escape(atob(s.replace(/\s/g, ""))));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const b64enc = s => { let bin = ""; new TextEncoder().encode(s).forEach(x => (bin += String.fromCharCode(x))); return btoa(bin); };
+const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g, "")), c => c.charCodeAt(0)));
 const serialize = d => "[\n" + d.map(p => "  " + JSON.stringify(p)).join(",\n") + "\n]\n";
+const fmt = n => "$" + Number(n).toLocaleString("es-AR");
 
 let repo = LS("rost_repo"), token = LS("rost_tok");
-let data = [], orig = "", sha = "";
-let cfg = { cerrado: false }, cfgSha = "";
+let data = [], orig = "", origData = [], sha = "";
+let cfg = { cerrado: false }, cfgSha = "", cfgOk = false;
+let showHid = false;
 let msgT;
+
+/* ── cambios sin publicar: se calculan sobre los datos (no sobre lo que se ve en pantalla) ── */
+function setOrig(arr) { orig = JSON.stringify(arr); origData = JSON.parse(orig); }
+const norm = p => JSON.stringify(Object.keys(p).sort().map(k => [k, p[k]])); // no depende del orden de las claves
+const posIn = (arr, p) => arr.filter(x => x.cat === p.cat).findIndex(x => x.id === p.id);
+const isDirty = p => { const o = origData.find(x => x.id === p.id); return !o || norm(o) !== norm(p) || posIn(origData, p) !== posIn(data, p); };
+const dirtyList = () => data.filter(isDirty);
 
 function say(t, ok = true) {
   const m = $("#msg"); m.textContent = t; m.className = ok ? "ok" : "er";
   clearTimeout(msgT); msgT = setTimeout(() => (m.className = ""), ok ? 4500 : 20000);
 }
+$("#msg").addEventListener("click", () => { $("#msg").className = ""; });
+
 const api = (path, opt = {}) =>
   fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
     ...opt,
@@ -145,11 +160,18 @@ const api = (path, opt = {}) =>
 async function ghErr(r) {
   let m = ""; try { m = (await r.json()).message || ""; } catch (e) {}
   const base = r.status === 401 ? "Token inválido o vencido. Generá uno nuevo."
-    : r.status === 403 ? "GitHub rechazó el cambio (403): el token no tiene permiso de escritura en este repo, o venció."
+    : r.status === 403 ? "GitHub rechazó el cambio (403): el token no tiene permiso de escritura en este repo, venció, o hiciste demasiados pedidos seguidos."
     : r.status === 404 ? "No encuentro el repo o el archivo (404): revisá el nombre del repo y que el token tenga acceso."
-    : (r.status === 409 || r.status === 422) ? "Conflicto con la versión guardada (" + r.status + "). Recargá la página."
+    : (r.status === 409 || r.status === 422) ? "Conflicto con la versión guardada (" + r.status + ")."
     : "Error " + r.status + ".";
   return base + (m ? " · GitHub dice: " + m : "");
+}
+
+function parseMenu(content) {
+  const d = JSON.parse(b64dec(content));
+  let mx = Math.max(0, ...d.map(p => Number(p.id) || 0)); d.forEach(p => { if (p.id == null) p.id = ++mx; });
+  d.forEach(p => { if (p.cat === "promos" && p.disponible === false) { p.oculto = true; p.disponible = true; } });
+  return d;
 }
 
 async function load() {
@@ -160,10 +182,7 @@ async function load() {
     if (r.status === 404) throw new Error("No encuentro menu.json en ese repositorio (o el token no tiene acceso).");
     if (!r.ok) throw new Error(await ghErr(r));
     const j = await r.json();
-    sha = j.sha; data = JSON.parse(b64dec(j.content));
-    let mx = Math.max(0, ...data.map(p => Number(p.id) || 0)); data.forEach(p => { if (p.id == null) p.id = ++mx; });
-    data.forEach(p => { if (p.cat === "promos" && p.disponible === false) { p.oculto = true; p.disponible = true; } });
-    orig = JSON.stringify(data);
+    sha = j.sha; data = parseMenu(j.content); setOrig(data);
     render(); $("#panel").classList.remove("hide");
     loadCfg();
   } catch (e) {
@@ -174,7 +193,8 @@ async function load() {
 
 const LABEL = { promos: "Promociones" };
 /* ── ORDEN: ▲▼ mueven el producto dentro de su categoría (el orden de menu.json es el orden en la página) ── */
-const sameCat = p => data.filter(x => x.cat === p.cat);
+const vis = p => showHid || !p.oculto;
+const sameCat = p => data.filter(x => x.cat === p.cat && (x === p || vis(x)));
 const isFirst = p => sameCat(p)[0] === p;
 const isLast = p => { const l = sameCat(p); return l[l.length - 1] === p; };
 const rowEl = id => document.querySelector(`.row[data-id="${id}"]`);
@@ -200,36 +220,52 @@ $("#list").addEventListener("click", e => {
   const p = data.find(x => x.id == b.closest(".row").dataset.id);
   move(p, b.dataset.mv === "up" ? -1 : 1);
 });
+$("#showHid").addEventListener("change", e => { showHid = e.target.checked; render(); });
 
-/* ── ESTADO DEL LOCAL (abierto / zzz cerrado) · se guarda aparte en config.json y se publica al instante ── */
+/* ── ESTADO DEL LOCAL + ENVÍO · se guardan aparte en config.json ── */
 function paintCfg() {
-  $("#zzz").checked = !!cfg.cerrado;
-  $("#zzzTxt").textContent = cfg.cerrado ? "😴 Zzz · CERRADO" : "🟢 ABIERTO";
-  $("#zzzSub").textContent = cfg.cerrado ? "La página se ve, pero nadie puede hacer pedidos. Apagá el interruptor para abrir." : "Tomando pedidos. Prendé el interruptor (zzz) cuando cierres.";
-  $("#statusCard").classList.toggle("closed", !!cfg.cerrado);
+  const ok = cfgOk;
+  $("#zzz").checked = !!cfg.cerrado; $("#zzz").disabled = !ok;
+  $("#envSave").disabled = !ok; $("#envMin").disabled = !ok; $("#envMax").disabled = !ok;
+  $("#cfgRetry").classList.toggle("hide", ok);
+  $("#zzzTxt").textContent = !ok ? "⚠️ No pude leer el estado" : cfg.cerrado ? "😴 Zzz · CERRADO" : "🟢 ABIERTO";
+  $("#zzzSub").textContent = !ok ? "No sé si el local figura abierto o cerrado. Tocá Reintentar antes de cambiar nada."
+    : cfg.cerrado ? "La página se ve, pero nadie puede hacer pedidos. Apagá el interruptor para abrir." : "Tomando pedidos. Prendé el interruptor (zzz) cuando cierres.";
+  $("#statusCard").classList.toggle("closed", ok && !!cfg.cerrado);
 }
 function paintEnv() { $("#envMin").value = cfg.envioMin ?? ""; $("#envMax").value = cfg.envioMax ?? ""; }
 async function loadCfg() {
+  cfgOk = false;
   try {
     const r = await api("config.json?t=" + Date.now());
-    if (r.ok) { const j = await r.json(); cfgSha = j.sha; cfg = JSON.parse(b64dec(j.content)); }
-    else { cfg = { cerrado: false }; cfgSha = ""; } // todavía no existe: se crea al primer cambio
-  } catch (e) {}
+    if (r.ok) { const j = await r.json(); cfgSha = j.sha; cfg = JSON.parse(b64dec(j.content)); cfgOk = true; }
+    else if (r.status === 404) { cfg = { cerrado: false }; cfgSha = ""; cfgOk = true; } // todavía no existe: se crea al primer cambio
+    else say((await ghErr(r)) + " No pude leer el estado del local.", false);
+  } catch (e) { say("No pude leer el estado del local (¿sin conexión?). Tocá Reintentar.", false); }
   paintCfg(); paintEnv();
 }
+async function putCfg(next, message) {
+  const r = await api("config.json", {
+    method: "PUT",
+    body: JSON.stringify({ message, content: b64enc(JSON.stringify(next) + "\n"), sha: cfgSha || undefined })
+  });
+  if (r.status === 409 || r.status === 422) {
+    await loadCfg();
+    throw new Error("La configuración cambió desde otro dispositivo. Ya la actualicé: revisá y volvé a intentar.");
+  }
+  if (!r.ok) throw new Error(await ghErr(r));
+  cfgSha = (await r.json()).content.sha; cfg = next;
+}
+$("#cfgRetry").onclick = loadCfg;
 $("#zzz").addEventListener("change", async e => {
   const want = e.target.checked, box = e.target;
+  if (want && !confirm("¿Cerrar el local? Nadie va a poder hacer pedidos hasta que lo vuelvas a abrir.")) { box.checked = false; return; }
   box.disabled = true;
   try {
-    const r = await api("config.json", {
-      method: "PUT",
-      body: JSON.stringify({ message: want ? "Local: CERRADO (zzz)" : "Local: ABIERTO", content: b64enc(JSON.stringify({ ...cfg, cerrado: want }) + "\n"), sha: cfgSha || undefined })
-    });
-    if (!r.ok) throw new Error(await ghErr(r));
-    cfgSha = (await r.json()).content.sha; cfg = { ...cfg, cerrado: want };
+    await putCfg({ ...cfg, cerrado: want }, want ? "Local: CERRADO (zzz)" : "Local: ABIERTO");
     say(want ? "Local CERRADO 😴 En 1–2 minutos la página deja de tomar pedidos." : "Local ABIERTO 🟢 En 1–2 minutos ya se puede pedir.");
   } catch (err) { say(err.message, false); }
-  paintCfg(); box.disabled = false;
+  paintCfg();
 });
 
 $("#envSave").onclick = async () => {
@@ -242,52 +278,47 @@ $("#envSave").onclick = async () => {
     const next = { ...cfg }; delete next.envioMin; delete next.envioMax;
     if (a) next.envioMin = a;
     if (b) next.envioMax = b;
-    const r = await api("config.json", {
-      method: "PUT",
-      body: JSON.stringify({ message: "Envío: rango de precio", content: b64enc(JSON.stringify(next) + "\n"), sha: cfgSha || undefined })
-    });
-    if (!r.ok) throw new Error(await ghErr(r));
-    cfgSha = (await r.json()).content.sha; cfg = next; paintEnv();
+    await putCfg(next, "Envío: rango de precio");
+    paintEnv();
     say("Envío guardado 🛵 En 1–2 minutos lo ven los clientes.");
   } catch (err) { say(err.message, false); }
-  btn.disabled = false;
+  btn.disabled = !cfgOk;
 };
 
 function render() {
-  const cats = [...new Set(data.map(p => p.cat))].sort((x, y) => (x === "promos" ? 0 : 1) - (y === "promos" ? 0 : 1)); // las promos SIEMPRE primero
-  $("#list").innerHTML = cats.map(c =>
-    `<h2>${LABEL[c] || c}</h2>` + data.filter(p => p.cat === c).map(p => `
-    <div class="card row" data-id="${p.id}">
-      <div class="top"><b>${p.nombre}</b><div class="mv"><button class="g" data-mv="up" aria-label="Subir" ${isFirst(p) ? "disabled" : ""}>▲</button><button class="g" data-mv="down" aria-label="Bajar" ${isLast(p) ? "disabled" : ""}>▼</button></div></div>
+  const cats = [...new Set(data.filter(vis).map(p => p.cat))].sort((x, y) => (x === "promos" ? 0 : 1) - (y === "promos" ? 0 : 1)); // las promos SIEMPRE primero
+  $("#list").innerHTML = cats.length ? cats.map(c =>
+    `<h2>${esc(LABEL[c] || c)}</h2>` + data.filter(p => p.cat === c && vis(p)).map(p => `
+    <div class="card row" data-id="${esc(p.id)}">
+      <div class="top"><b>${esc(p.nombre)}</b><div class="mv"><button class="g" data-mv="up" aria-label="Subir" ${isFirst(p) ? "disabled" : ""}>▲</button><button class="g" data-mv="down" aria-label="Bajar" ${isLast(p) ? "disabled" : ""}>▼</button></div></div>
       <div class="sws">
         <label class="sl"><span class="sw"><input type="checkbox" data-f="visible" ${p.oculto ? "" : "checked"}><span></span></span>Visible</label>
         ${p.cat === "promos" ? "" : `<label class="sl"><span class="sw"><input type="checkbox" data-f="disponible" ${p.disponible !== false ? "checked" : ""}><span></span></span>Hay stock</label>`}
       </div>
       <div class="nums">
-        <label>Precio hoy<input type="number" inputmode="numeric" data-f="precio" value="${p.precio ?? ""}"></label>
-        <label>Antes (oferta)<input type="number" inputmode="numeric" data-f="antes" placeholder="sin oferta" value="${p.antes ?? ""}"></label>
+        <label>Precio hoy<input type="number" inputmode="numeric" data-f="precio" value="${esc(p.precio ?? "")}"></label>
+        <label>Antes (oferta)<input type="number" inputmode="numeric" data-f="antes" placeholder="sin oferta" value="${esc(p.antes ?? "")}"></label>
         <div class="pct"></div>
       </div>
-    </div>`).join("")).join("");
+    </div>`).join("")).join("") : '<p class="s">No hay productos para mostrar.</p>';
+  $("#hidN").textContent = data.filter(p => p.oculto).length;
   data.forEach(p => paint(p));
   refreshBar();
 }
 
 function paint(p) {
-  const row = document.querySelector(`.row[data-id="${p.id}"]`); if (!row) return;
+  const row = rowEl(p.id); if (!row) return;
   row.classList.toggle("off", p.disponible === false);
   row.classList.toggle("hid", !!p.oculto);
   const pct = row.querySelector(".pct");
-  const on = p.antes && p.antes > p.precio;
+  const on = p.antes && p.precio > 0 && p.antes > p.precio;
   pct.classList.toggle("on", !!on);
   pct.textContent = on ? "-" + Math.round((1 - p.precio / p.antes) * 100) + "%" : "";
-  const og = JSON.parse(orig), o = og.find(x => x.id === p.id);
-  const pos = l => l.filter(x => x.cat === p.cat).findIndex(x => x.id === p.id);
-  row.classList.toggle("dirty", JSON.stringify(o) !== JSON.stringify(p) || pos(og) !== pos(data));
+  row.classList.toggle("dirty", isDirty(p));
 }
 
 function refreshBar() {
-  const n = document.querySelectorAll(".row.dirty").length;
+  const n = dirtyList().length;
   $("#bar").classList.toggle("on", n > 0);
   $("#cnt").textContent = n + (n === 1 ? " cambio sin publicar" : " cambios sin publicar");
 }
@@ -301,29 +332,71 @@ function onEdit(e) {
   else if (f === "visible") { if (e.target.checked) delete p.oculto; else p.oculto = true; }
   else {
     const v = e.target.value.trim();
-    if (v === "") { if (f === "antes") delete p.antes; }
+    if (v === "" || !isFinite(Number(v))) { if (f === "antes") delete p.antes; else p.precio = null; } // precio vacío = sin precio (no deja publicar)
     else p[f] = Math.max(0, Math.round(Number(v)));
   }
   paint(p); refreshBar();
 }
 
-$("#undo").onclick = () => { data = JSON.parse(orig); render(); };
+$("#undo").onclick = () => {
+  const n = dirtyList().length;
+  if (!confirm(`¿Descartar ${n === 1 ? "el cambio" : "los " + n + " cambios"} sin publicar?`)) return;
+  data = JSON.parse(orig); render();
+};
+
+/* Avisa (sin bloquear) si un precio cambió de golpe o se ve raro: típico error de un cero de más o de menos */
+function preciosDudosos() {
+  const out = [];
+  dirtyList().forEach(p => {
+    const o = origData.find(x => x.id === p.id), w = [];
+    if (o && o.precio > 0 && (p.precio >= o.precio * 3 || p.precio <= o.precio / 3)) w.push(`pasó de ${fmt(o.precio)} a ${fmt(p.precio)}`);
+    if (p.antes && p.antes > (p.precio * 10) / 3) w.push(`la oferta da más de 70% de descuento (${fmt(p.antes)} → ${fmt(p.precio)})`);
+    if (p.precio >= 500000) w.push(`el precio ${fmt(p.precio)} parece demasiado alto`);
+    if (w.length) out.push(`• ${p.nombre}: ${w.join("; ")}`);
+  });
+  return out;
+}
+
+/* Si alguien cambió menu.json mientras editabas: se trae la versión nueva y se le aplican TUS cambios (campo por campo) */
+async function mergeRemote() {
+  const r = await api("menu.json?t=" + Date.now());
+  if (!r.ok) throw new Error(await ghErr(r));
+  const j = await r.json(), remote = parseMenu(j.content);
+  const base = new Map(origData.map(p => [p.id, p])), rem = new Map(remote.map(p => [p.id, p]));
+  const merged = [];
+  data.forEach(p => {
+    const rp = rem.get(p.id); if (!rp) return; // lo borraron del otro lado
+    const o = base.get(p.id) || {}, m = { ...rp };
+    new Set([...Object.keys(o), ...Object.keys(p)]).forEach(k => {
+      if (JSON.stringify(o[k]) !== JSON.stringify(p[k])) { if (p[k] === undefined) delete m[k]; else m[k] = p[k]; }
+    });
+    merged.push(m);
+  });
+  remote.forEach(rp => { if (!data.some(p => p.id === rp.id)) merged.push(rp); }); // productos nuevos del otro lado
+  sha = j.sha; setOrig(remote); data = merged; render();
+}
 
 $("#save").onclick = async () => {
   const bad = data.find(p => p.antes && p.antes <= p.precio);
   if (bad) return say(`"${bad.nombre}": el precio "Antes" tiene que ser MAYOR al de hoy (o dejalo vacío).`, false);
-  if (data.some(p => !(p.precio > 0))) return say("Hay un producto sin precio.", false);
+  const sin = data.find(p => !(p.precio > 0));
+  if (sin) return say(`"${sin.nombre}" no tiene precio. Poné un número mayor a 0.`, false);
+  const dudas = preciosDudosos();
+  if (dudas.length && !confirm("Revisá estos precios antes de publicar:\n\n" + dudas.join("\n") + "\n\n¿Publicar igual?")) return;
   data.sort((x, y) => (x.cat === "promos" ? 0 : 1) - (y.cat === "promos" ? 0 : 1)); // promos siempre primero (orden estable)
   const btn = $("#save"); btn.disabled = true; btn.textContent = "Publicando…";
   try {
-    const n = document.querySelectorAll(".row.dirty").length;
-    const r = await api("menu.json", {
-      method: "PUT",
-      body: JSON.stringify({ message: `Menú: ${n} cambio(s) desde el panel`, content: b64enc(serialize(data)), sha })
-    });
-        if (!r.ok) throw new Error(await ghErr(r));
-    sha = (await r.json()).content.sha; orig = JSON.stringify(data); render();
-    say("Publicado ✔ En 1–2 minutos lo ve todo el mundo.");
+    const names = dirtyList().map(p => p.nombre);
+    const msg = "Menú: " + (names.slice(0, 3).join(", ") || "orden") + (names.length > 3 ? ` (+${names.length - 3})` : "");
+    const r = await api("menu.json", { method: "PUT", body: JSON.stringify({ message: msg, content: b64enc(serialize(data)), sha }) });
+    if (r.status === 409 || r.status === 422) {
+      await mergeRemote();
+      say("Alguien cambió el menú mientras editabas. Combiné sus cambios con los tuyos: revisá y tocá Publicar de nuevo.", false);
+    } else if (!r.ok) throw new Error(await ghErr(r));
+    else {
+      sha = (await r.json()).content.sha; setOrig(data); render();
+      say("Publicado ✔ En 1–2 minutos lo ve todo el mundo.");
+    }
   } catch (e) { say(e.message, false); }
   btn.disabled = false; btn.textContent = "Publicar";
 };
@@ -334,9 +407,14 @@ $("#go").onclick = () => {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !token) return say("Completá repositorio (usuario/repo) y token.", false);
   LSset("rost_repo", repo); LSset("rost_tok", token); $("#tok").value = ""; load();
 };
-$("#out").onclick = () => { LSset("rost_tok", ""); token = ""; $("#panel").classList.add("hide"); $("#bar").classList.remove("on"); $("#login").classList.remove("hide"); $("#repo").value = repo; };
+["#repo", "#tok"].forEach(s => $(s).addEventListener("keydown", e => { if (e.key === "Enter") $("#go").click(); }));
+$("#out").onclick = () => {
+  if (dirtyList().length && !confirm("Tenés cambios sin publicar y se van a perder. ¿Cerrar sesión igual?")) return;
+  LSset("rost_tok", ""); token = ""; data = []; setOrig([]);
+  $("#panel").classList.add("hide"); $("#bar").classList.remove("on"); $("#login").classList.remove("hide"); $("#repo").value = repo;
+};
 
-window.addEventListener("beforeunload", e => { if (document.querySelector(".row.dirty")) { e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("beforeunload", e => { if (data.some(isDirty)) { e.preventDefault(); e.returnValue = ""; } });
 
 (token && repo) ? load() : (($("#repo").value = repo), $("#login").classList.remove("hide"));
 </script>
